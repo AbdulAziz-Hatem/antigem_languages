@@ -19,10 +19,15 @@ tap the language to show the app in it.
 ## Languages
 
 <!-- languages:start -->
-No languages yet. Be the first: see [CONTRIBUTING.md](CONTRIBUTING.md).
+| Language | | Translated | By | File |
+|---|---|---|---|---|
+| Pirate English (TEST) · Test only, not for use | Pirate Speak | 66% | [AntiGem](https://github.com/Santoshkurmi) | [en-pirate-test](languages/en/en-pirate-test.json) |
 <!-- languages:end -->
 
 The table and [`index.json`](index.json) are rebuilt automatically after every change.
+
+> **Pirate English (TEST)** is a test pack, not a real translation. It's here to try downloading, updating and
+> removing a language, and its texts are silly pirate speak made by swapping words. Please don't use it for real.
 
 ## Add a new language: step by step
 

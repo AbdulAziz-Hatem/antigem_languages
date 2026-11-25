@@ -6,5 +6,32 @@
     "texts": 7262,
     "sha256": "6c17b65ff46d3a63cb42d8257f9800a1dfcdb6c58bdd06a1ddc1e5fdb4c912ed"
   },
-  "languages": []
+  "languages": [
+    {
+      "id": "en-pirate-test",
+      "code": "en",
+      "name": "Pirate English (TEST)",
+      "native_name": "Pirate Speak",
+      "variant": "Test only, not for use",
+      "rtl": false,
+      "description": "TEST PACK, not a real translation. It's here to try downloading, updating and removing languages, so please don't use it for real. Every text is silly pirate speak made by swapping words. Arr!",
+      "authors": [
+        {
+          "name": "AntiGem",
+          "github": "Santoshkurmi",
+          "role": "Test pack"
+        }
+      ],
+      "based_on": "",
+      "app_version": "2.0.5-beta.5",
+      "translated": 4847,
+      "outdated": 0,
+      "total": 7262,
+      "path": "languages/en/en-pirate-test.json",
+      "commit": "",
+      "updated": "",
+      "size": 778364,
+      "sha256": "68817a3938b2f08164728124000552c23694225a95d8851f75e03baa53aaafd2"
+    }
+  ]
 }
