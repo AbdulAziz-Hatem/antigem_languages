@@ -8,6 +8,32 @@
   },
   "languages": [
     {
+      "id": "ar",
+      "code": "ar",
+      "name": "Arabic",
+      "native_name": "العربية",
+      "variant": "",
+      "rtl": true,
+      "description": "Complete Arabic (العربية) translation for AntiGem, covering all UI texts with unified terminology, RTL punctuation («» & ←), and disambiguation diacritics. Translated with AI assistance and reviewed by AbdulAziz-Hatem.",
+      "authors": [
+        {
+          "name": "AbdulAziz-Hatem",
+          "github": "AbdulAziz-Hatem",
+          "role": "Translation & Review"
+        }
+      ],
+      "based_on": "",
+      "app_version": "2.0.5-beta.5",
+      "translated": 7261,
+      "outdated": 0,
+      "total": 7338,
+      "path": "languages/ar/ar.json",
+      "commit": "9ae270a91c157d94b80e4ddaffa41ada21d92560",
+      "updated": "2026-11-25",
+      "size": 1239061,
+      "sha256": "892e804081b344850168c3caf807f808f121f54658ee3dd65d86f2a4e595c671"
+    },
+    {
       "id": "zh-hans",
       "code": "zh-Hans",
       "name": "Chinese (Simplified)",
