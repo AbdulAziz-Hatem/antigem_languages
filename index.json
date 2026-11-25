@@ -8,6 +8,32 @@
   },
   "languages": [
     {
+      "id": "zh-hans",
+      "code": "zh-Hans",
+      "name": "Chinese (Simplified)",
+      "native_name": "简体中文",
+      "variant": "",
+      "rtl": false,
+      "description": "Complete Simplified Chinese (简体中文) translation for AntiGem, covering all UI texts. Translated with AI assistance and reviewed by Zmin.",
+      "authors": [
+        {
+          "name": "Zmin",
+          "github": "Zmin2003",
+          "role": "Translation"
+        }
+      ],
+      "based_on": "",
+      "app_version": "2.0.5-beta.4",
+      "translated": 7262,
+      "outdated": 0,
+      "total": 7262,
+      "path": "languages/zh-Hans/zh-hans.json",
+      "commit": "177f8bc87949e624bea27dcf0ff20d554b3573a7",
+      "updated": "2026-11-25",
+      "size": 1053466,
+      "sha256": "33ea96b663034b2c33f4175fff083596ff9fe5da399185ac84e884d755ffc829"
+    },
+    {
       "id": "en-pirate-test",
       "code": "en",
       "name": "Pirate English (TEST)",
