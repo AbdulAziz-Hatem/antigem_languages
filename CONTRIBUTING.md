@@ -1,0 +1,131 @@
+# Translating AntiGem
+
+Thank you for helping. Every text the app shows has a **key** (like `settings.language.appLanguage`) and an
+English text. A translation gives its own text for each key; the app shows English for any key it leaves out, so a
+half-done translation is already useful.
+
+Before you start, look at the [list of languages](README.md#languages). If your language is there, improving that
+pack is usually better than starting a second one. Start a new pack when you want a different style or script
+(formal, casual, Latin letters…): give it a **variant**.
+
+---
+
+## Way 1: in the app (no git needed)
+
+1. **Settings → Language → New language.** Fill in the name in English, the name in the language itself, the
+   language code (see [Codes and ids](#codes-and-ids)) and whether it's written right to left.
+   To improve a downloaded language, tap its **⋮ → Duplicate** instead and work on the copy.
+2. Tap the language to show the app in it, then **⋮ → Edit texts**. The **To translate** filter shows what's left.
+   Edits save as you type, and the app changes as you go.
+3. **⋮ → Name & details:** add yourself under **Made by** (name and GitHub username), plus a short description.
+4. **⋮ → Send to the community:** save the file, then open the form on GitHub and attach the file
+   (if GitHub refuses a `.json` file, zip it first). We'll turn it into a pull request and credit you.
+
+## Way 2: with an AI agent
+
+1. Turn on the **Language** MCP server for your agent (the agent's MCP settings → Language).
+2. Settings → Language → **Translate with AI → Copy a prompt**, and paste it into a chat. The agent creates the
+   language and translates it batch by batch while you watch the app change.
+3. **Read the result.** Machine translations are welcome, but a person who speaks the language must check them.
+   Say so in the description, e.g. *"Translated with Claude, reviewed by Sita"*. Then send it as in way 1, step 4.
+
+## Way 3: by hand, with a pull request
+
+1. Copy [`en.json`](en.json) (or, in the app, English **⋮ → Save as a template**) to
+   `languages/<code>/<id>.json`, e.g. `languages/ne/ne.json`.
+2. Change the header (see [The file](#the-file)), translate the texts and delete the `notes` block.
+   You can leave out keys you don't translate.
+3. Check it: `python3 tools/build_index.py --check languages/ne/ne.json`
+4. Open a pull request. The same check runs on it.
+
+---
+
+## The file
+
+```json
+{
+  "format": "antigem-language",
+  "format_version": 2,
+  "code": "ne",
+  "name": "Nepali",
+  "native_name": "नेपाली",
+  "variant": "",
+  "rtl": false,
+  "description": "Everyday Nepali for the whole app.",
+  "authors": [
+    { "name": "Sita Sharma", "github": "sita-sharma", "role": "Translation" },
+    { "name": "Ram Thapa", "github": "ramthapa", "role": "Review" }
+  ],
+  "based_on": "",
+  "app_version": "2.0.5",
+  "strings": {
+    "common.cancel": "रद्द गर्नुहोस्",
+    "files.list.count": { "one": "{count} फाइल", "other": "{count} फाइलहरू" }
+  },
+  "sources": {
+    "common.cancel": "77f8c1d"
+  }
+}
+```
+
+| Field | |
+|---|---|
+| `format`, `format_version` | Always `"antigem-language"` and `2`. |
+| `id` | Optional. If it's there, it must be the file name. |
+| `code` | The language code. It must match the folder name, and the app uses it for plural rules. |
+| `name` | The language's name in English: `Nepali`. |
+| `native_name` | Its name in the language itself: `नेपाली`. |
+| `variant` | Optional, short. Tells packs of one language apart: `Formal`, `Latin letters`, `Casual`. |
+| `rtl` | `true` for languages written right to left (Arabic, Hebrew, Urdu, Persian…). |
+| `description` | One or two lines about the translation (style, how complete, how it was made). |
+| `authors` | Everyone who worked on it: `name` (required), `github` (username, optional), `role` (optional: `Translation`, `Review`, `AI`…), `url` (optional, https). |
+| `based_on` | Optional: the id of the pack this one started from. The app fills it in when you duplicate a downloaded language. |
+| `app_version` | The app version the texts were translated for. The app fills it in. |
+| `strings` | `key → text`. Keys you leave out show in English. |
+| `sources` | `key → hash` of the English each text was translated from. The app writes it; keep it as it is. It's how outdated texts are found when the English changes. |
+
+Your editor can check the file as you type: [`schema/antigem-language.schema.json`](schema/antigem-language.schema.json).
+
+### Codes and ids
+
+- **Folder = language code** ([BCP 47](https://www.w3.org/International/articles/language-tags/)): `ne`, `hi`,
+  `pt-BR`, `zh-Hans`, `sr-Latn`. Use the plain code unless the region or script really matters.
+- **File name = pack id**, unique in this repository: lowercase letters, digits and hyphens.
+  Use the code for the main pack (`ne.json`, `pt-br.json`) and add the variant for others
+  (`hi-latn.json`, `de-formal.json`).
+- **Don't rename a published pack.** The app knows a downloaded language by its id, so a new id is a new language
+  for everyone who downloaded the old one.
+
+### Improving an existing pack
+
+Edit its file in a pull request (or duplicate it in the app and send the result: we merge it into the original).
+Add yourself to `authors` and keep everyone who's already there.
+
+---
+
+## Rules for the texts
+
+- **Keep every `{placeholder}` exactly as it is.** The app fills them in: `{name}`, `{count}`, `{path}`. You can move
+  them anywhere in the sentence, but don't translate or rename them. A text with a placeholder that isn't in the
+  English text is refused.
+- **Plurals:** where English has `{ "one": …, "other": … }`, give the forms your language uses
+  (`zero`, `one`, `two`, `few`, `many`, `other`; `other` is required). The app picks the form from
+  [the language's plural rules](https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html).
+- **Keep buttons, tabs and chips short.** They sit on a phone screen.
+- **Don't translate** names of apps, agents, models and services (AntiGem, Claude, Codex, OpenCode, Antigravity,
+  Gemini, GitHub, Termux…), commands, file paths and code.
+- **Write the way people talk** in your language on their phones. Follow the style your phone's own system uses.
+- Line breaks (`\n`) and punctuation like `·` and `…` can stay where they fit your language.
+- Some keys have a note in `en.json` (`notes`) that explains where the text appears.
+
+## License
+
+The app is licensed under GPL-3.0-or-later, and so are the translations (see [LICENSE](LICENSE)): they translate
+the app's own texts. **By sending a translation (a pull request or the "Share a translation" form), you agree to
+share it under GPL-3.0-or-later.** You keep the credit: your name stays in the pack's `authors`.
+
+## What happens after a merge
+
+A workflow checks every pack again, rebuilds `index.json` and the table in the README, and commits them. Within a
+few minutes, the app lists the new pack. People who already downloaded it see **Update** the next time they open
+the Language page.

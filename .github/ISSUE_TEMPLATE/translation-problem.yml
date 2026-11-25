@@ -1,0 +1,33 @@
+name: Report a translation problem
+description: A wrong, odd, too long or untranslated text in a downloaded language.
+title: "Translation problem: "
+labels: ["translation problem"]
+body:
+  - type: input
+    id: pack
+    attributes:
+      label: Language
+      description: As shown in Settings → Language (and its variant, if any)
+      placeholder: Nepali
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where in the app
+      description: The screen, or the key if you know it (Settings → Language → ⋮ → View texts shows every key). A screenshot helps.
+    validations:
+      required: true
+  - type: input
+    id: now
+    attributes:
+      label: The text now
+  - type: input
+    id: better
+    attributes:
+      label: A better text
+  - type: textarea
+    id: notes
+    attributes:
+      label: Why
+      description: Wrong meaning, too long for the button, unnatural wording…

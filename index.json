@@ -1,0 +1,10 @@
+{
+  "format": "antigem-language-index",
+  "format_version": 1,
+  "repository": "Santoshkurmi/antigem_languages",
+  "english": {
+    "texts": 7262,
+    "sha256": "6c17b65ff46d3a63cb42d8257f9800a1dfcdb6c58bdd06a1ddc1e5fdb4c912ed"
+  },
+  "languages": []
+}

@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: How to translate AntiGem
+    url: https://github.com/Santoshkurmi/antigem_languages/blob/main/CONTRIBUTING.md
+    about: Three ways to translate (in the app, with an AI agent, or by hand), the file format and the rules.

@@ -1,0 +1,57 @@
+name: Share a translation
+description: Send a language you made in the app (no git needed). We turn it into a pull request and credit you.
+title: "Translation: "
+labels: ["translation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! In the app: **Settings → Language → ⋮ on your language → Send to the community → Save the file**,
+        then attach that file below. If GitHub refuses the `.json` file, zip it first.
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: Its name in English and its code
+      placeholder: Nepali (ne)
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Is it a new pack or an improvement?
+      options:
+        - A new language
+        - A new variant of a language that's already here (another style or script)
+        - Improvements to a pack that's already here
+    validations:
+      required: true
+  - type: textarea
+    id: authors
+    attributes:
+      label: Who made it
+      description: One person per line. Name, GitHub username (optional) and what they did. These names are shown in the app.
+      placeholder: |
+        Sita Sharma, @sita-sharma, translation
+        Ram Thapa, @ramthapa, review
+    validations:
+      required: true
+  - type: textarea
+    id: file
+    attributes:
+      label: The file
+      description: Drag the language file (or its zip) here.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else?
+      description: Style choices, what's not done yet, whether an AI helped and who checked it.
+  - type: checkboxes
+    id: license
+    attributes:
+      label: License
+      options:
+        - label: I agree to share this translation under GPL-3.0-or-later (the app's license), and everyone listed above agrees too.
+          required: true

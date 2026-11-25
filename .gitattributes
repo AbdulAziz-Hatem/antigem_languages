@@ -1,0 +1,5 @@
+# Packs are checked by their SHA-256: keep the bytes the same on every system.
+*.json text eol=lf
+*.md   text eol=lf
+*.py   text eol=lf
+*.yml  text eol=lf

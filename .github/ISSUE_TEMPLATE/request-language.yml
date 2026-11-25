@@ -1,0 +1,28 @@
+name: Ask for a language
+description: A language you'd like to use AntiGem in. Anyone who speaks it can pick it up.
+title: "Language request: "
+labels: ["language request"]
+body:
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: Its name in English, in the language itself, and its code if you know it
+      placeholder: Nepali · नेपाली (ne)
+    validations:
+      required: true
+  - type: dropdown
+    id: help
+    attributes:
+      label: Can you help translate or review it?
+      options:
+        - Yes, I can translate
+        - I can review someone else's translation
+        - No, but I'd use it
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else?
+      description: The script or style you'd like (e.g. Latin letters, formal), or apps whose wording you like.

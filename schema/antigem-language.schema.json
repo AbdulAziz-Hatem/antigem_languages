@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Santoshkurmi/antigem_languages/HEAD/schema/antigem-language.schema.json",
+  "title": "AntiGem language pack",
+  "description": "A translation of the AntiGem app. See CONTRIBUTING.md.",
+  "type": "object",
+  "required": ["format", "code", "name", "authors", "strings"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "format": { "const": "antigem-language" },
+    "format_version": { "enum": [1, 2] },
+    "id": {
+      "description": "The pack id: the file name without .json. Optional.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 60
+    },
+    "code": {
+      "description": "Language code (BCP 47), the same as the folder name: ne, hi, pt-BR, zh-Hans.",
+      "type": "string",
+      "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+    },
+    "name": { "description": "The language's name in English, like Nepali.", "type": "string", "minLength": 1 },
+    "native_name": { "description": "The language's name in itself, like नेपाली.", "type": "string" },
+    "variant": { "description": "Tells packs of one language apart: Formal, Latin letters…", "type": "string", "maxLength": 40 },
+    "rtl": { "description": "Written right to left.", "type": "boolean" },
+    "description": { "description": "One or two lines about the translation.", "type": "string", "maxLength": 600 },
+    "authors": {
+      "description": "Everyone who worked on it.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "github": { "description": "GitHub username, without @.", "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$" },
+          "url": { "type": "string", "pattern": "^https://" },
+          "role": { "description": "Translation, Review, AI…", "type": "string", "maxLength": 40 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "based_on": { "description": "The id of the pack this one started from.", "type": "string" },
+    "app_version": { "description": "The app version the texts were translated for.", "type": "string" },
+    "strings": {
+      "description": "key → text, or key → plural forms. Keys left out show in English.",
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["other"],
+            "properties": {
+              "zero": { "type": "string" },
+              "one": { "type": "string" },
+              "two": { "type": "string" },
+              "few": { "type": "string" },
+              "many": { "type": "string" },
+              "other": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "sources": {
+      "description": "key → hash of the English each text was translated from (written by the app; keep it).",
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "author": { "description": "Old (format 1): use authors.", "type": "string" },
+    "about": { "description": "Old (format 1): use description.", "type": "string" }
+  }
+}

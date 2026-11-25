@@ -1,0 +1,57 @@
+name: Publish the language list
+
+# Rebuilds index.json (what the app reads) and the table in README.md, with the app's current English texts.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'languages/**'
+      - 'tools/**'
+      - 'README.md'
+      - '.github/workflows/publish.yml'
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+env:
+  # the app's English texts (the branch the app is developed on)
+  APP_ENGLISH_URL: https://raw.githubusercontent.com/Santoshkurmi/antigem/standalone/app/src/main/assets/i18n/en.json
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch the app's English texts
+        run: |
+          if curl -fsSL "$APP_ENGLISH_URL" -o /tmp/en.json \
+             && python3 -c 'import json,sys; d=json.load(open("/tmp/en.json",encoding="utf-8")); sys.exit(0 if d.get("format")=="antigem-language" and len(d.get("strings",{}))>100 else 1)'; then
+            cp /tmp/en.json en.json
+          else
+            echo "::warning::Could not fetch the app's en.json, keeping the one in the repository"
+          fi
+
+      - name: Build index.json and the README table
+        run: python3 tools/build_index.py
+
+      - name: Commit what changed
+        run: |
+          git add en.json index.json README.md
+          if git diff --cached --quiet; then
+            echo "Nothing changed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update the language list"
+          git push
