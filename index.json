@@ -3,8 +3,8 @@
   "format_version": 1,
   "repository": "Santoshkurmi/antigem_languages",
   "english": {
-    "texts": 7338,
-    "sha256": "76b7d8e5a38c8fdbfdd2f8689e811db85eefbcd84d099a7f8a8c23f9d4ec71f4"
+    "texts": 7360,
+    "sha256": "766d8222b06f3b395fdf7b1c733a503efcfd07c583869e53d7228e9a8d339736"
   },
   "languages": [
     {
@@ -26,7 +26,7 @@
       "app_version": "2.0.5-beta.5",
       "translated": 7261,
       "outdated": 0,
-      "total": 7338,
+      "total": 7360,
       "path": "languages/ar/ar.json",
       "commit": "9ae270a91c157d94b80e4ddaffa41ada21d92560",
       "updated": "2026-11-25",
@@ -52,7 +52,7 @@
       "app_version": "2.0.5-beta.4",
       "translated": 7261,
       "outdated": 0,
-      "total": 7338,
+      "total": 7360,
       "path": "languages/zh-Hans/zh-hans.json",
       "commit": "177f8bc87949e624bea27dcf0ff20d554b3573a7",
       "updated": "2026-11-25",
@@ -78,12 +78,38 @@
       "app_version": "2.0.5-beta.5",
       "translated": 4846,
       "outdated": 0,
-      "total": 7338,
+      "total": 7360,
       "path": "languages/en/en-pirate-test.json",
       "commit": "74461ad1b6ded73da35bf7704e57127399b11f7f",
       "updated": "2026-11-25",
       "size": 778364,
       "sha256": "68817a3938b2f08164728124000552c23694225a95d8851f75e03baa53aaafd2"
+    },
+    {
+      "id": "ru",
+      "code": "ru",
+      "name": "Russian",
+      "native_name": "Русский",
+      "variant": "",
+      "rtl": false,
+      "description": "Complete Russian (Русский) translation for AntiGem, covering all UI texts. Translated by kuprizzz.",
+      "authors": [
+        {
+          "name": "kuprizzz",
+          "github": "Selyrith",
+          "role": "Translation"
+        }
+      ],
+      "based_on": "",
+      "app_version": "2.0.5-beta.5",
+      "translated": 7261,
+      "outdated": 0,
+      "total": 7360,
+      "path": "languages/ru/ru.json",
+      "commit": "5e2d2e0798558d140fdc135e7542b1b284f10de3",
+      "updated": "2026-11-25",
+      "size": 1273980,
+      "sha256": "7b0c8867ff03519d1a2b5272ff29c4a283d05dfcca573c2a1d30a3e8371825ff"
     },
     {
       "id": "turkish",
@@ -104,7 +130,7 @@
       "app_version": "2.0.5-beta.5",
       "translated": 7261,
       "outdated": 0,
-      "total": 7338,
+      "total": 7360,
       "path": "languages/tr/turkish.json",
       "commit": "9626a8424afe9f807758ed262b1650e5eb7740a5",
       "updated": "2026-11-25",

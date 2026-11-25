@@ -23,7 +23,8 @@ tap the language to show the app in it.
 |---|---|---|---|---|
 | Arabic | العربية | 98% | [AbdulAziz-Hatem](https://github.com/AbdulAziz-Hatem) | [ar](languages/ar/ar.json) |
 | Chinese (Simplified) | 简体中文 | 98% | [Zmin](https://github.com/Zmin2003) | [zh-hans](languages/zh-Hans/zh-hans.json) |
-| Pirate English (TEST) · Test only, not for use | Pirate Speak | 66% | [AntiGem](https://github.com/Santoshkurmi) | [en-pirate-test](languages/en/en-pirate-test.json) |
+| Pirate English (TEST) · Test only, not for use | Pirate Speak | 65% | [AntiGem](https://github.com/Santoshkurmi) | [en-pirate-test](languages/en/en-pirate-test.json) |
+| Russian | Русский | 98% | [kuprizzz](https://github.com/Selyrith) | [ru](languages/ru/ru.json) |
 | Turkish | Türkçe | 98% | [muazzezwq](https://github.com/muazzezwq) | [turkish](languages/tr/turkish.json) |
 <!-- languages:end -->
 
