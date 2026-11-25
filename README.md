@@ -21,11 +21,11 @@ tap the language to show the app in it.
 <!-- languages:start -->
 | Language | | Translated | By | File |
 |---|---|---|---|---|
-| Arabic | العربية | 98% | [AbdulAziz-Hatem](https://github.com/AbdulAziz-Hatem) | [ar](languages/ar/ar.json) |
-| Chinese (Simplified) | 简体中文 | 98% | [Zmin](https://github.com/Zmin2003) | [zh-hans](languages/zh-Hans/zh-hans.json) |
-| Pirate English (TEST) · Test only, not for use | Pirate Speak | 65% | [AntiGem](https://github.com/Santoshkurmi) | [en-pirate-test](languages/en/en-pirate-test.json) |
-| Russian | Русский | 98% | [kuprizzz](https://github.com/Selyrith) | [ru](languages/ru/ru.json) |
-| Turkish | Türkçe | 98% | [muazzezwq](https://github.com/muazzezwq) | [turkish](languages/tr/turkish.json) |
+| Arabic | العربية | 97% | [AbdulAziz-Hatem](https://github.com/AbdulAziz-Hatem) | [ar](languages/ar/ar.json) |
+| Chinese (Simplified) | 简体中文 | 95% | [Zmin](https://github.com/Zmin2003) | [zh-hans](languages/zh-Hans/zh-hans.json) |
+| Pirate English (TEST) · Test only, not for use | Pirate Speak | 64% | [AntiGem](https://github.com/Santoshkurmi) | [en-pirate-test](languages/en/en-pirate-test.json) |
+| Russian | Русский | 95% | [kuprizzz](https://github.com/Selyrith) | [ru](languages/ru/ru.json) |
+| Turkish | Türkçe | 95% | [muazzezwq](https://github.com/muazzezwq) | [turkish](languages/tr/turkish.json) |
 <!-- languages:end -->
 
 The table and [`index.json`](index.json) are rebuilt automatically after every change.

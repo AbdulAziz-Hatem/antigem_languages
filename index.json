@@ -3,8 +3,8 @@
   "format_version": 1,
   "repository": "Santoshkurmi/antigem_languages",
   "english": {
-    "texts": 7360,
-    "sha256": "766d8222b06f3b395fdf7b1c733a503efcfd07c583869e53d7228e9a8d339736"
+    "texts": 7567,
+    "sha256": "4c578ab7aa092bc7a351448ff0d2df4ffeed19fb7c0ea278848bdc18023e4748"
   },
   "languages": [
     {
@@ -24,14 +24,14 @@
       ],
       "based_on": "",
       "app_version": "2.0.5-beta.5",
-      "translated": 7261,
+      "translated": 7360,
       "outdated": 0,
-      "total": 7360,
+      "total": 7567,
       "path": "languages/ar/ar.json",
-      "commit": "9ae270a91c157d94b80e4ddaffa41ada21d92560",
+      "commit": "e891c87abab85f93132e6c54d3202989d8d3e662",
       "updated": "2026-11-25",
-      "size": 1239061,
-      "sha256": "892e804081b344850168c3caf807f808f121f54658ee3dd65d86f2a4e595c671"
+      "size": 1262821,
+      "sha256": "141cdfffd47dd77984f2d4291138fd8699e05c741920126b32f4ee88589006fe"
     },
     {
       "id": "zh-hans",
@@ -52,7 +52,7 @@
       "app_version": "2.0.5-beta.4",
       "translated": 7261,
       "outdated": 0,
-      "total": 7360,
+      "total": 7567,
       "path": "languages/zh-Hans/zh-hans.json",
       "commit": "177f8bc87949e624bea27dcf0ff20d554b3573a7",
       "updated": "2026-11-25",
@@ -78,7 +78,7 @@
       "app_version": "2.0.5-beta.5",
       "translated": 4846,
       "outdated": 0,
-      "total": 7360,
+      "total": 7567,
       "path": "languages/en/en-pirate-test.json",
       "commit": "74461ad1b6ded73da35bf7704e57127399b11f7f",
       "updated": "2026-11-25",
@@ -104,7 +104,7 @@
       "app_version": "2.0.5-beta.5",
       "translated": 7261,
       "outdated": 0,
-      "total": 7360,
+      "total": 7567,
       "path": "languages/ru/ru.json",
       "commit": "5e2d2e0798558d140fdc135e7542b1b284f10de3",
       "updated": "2026-11-25",
@@ -130,7 +130,7 @@
       "app_version": "2.0.5-beta.5",
       "translated": 7261,
       "outdated": 0,
-      "total": 7360,
+      "total": 7567,
       "path": "languages/tr/turkish.json",
       "commit": "9626a8424afe9f807758ed262b1650e5eb7740a5",
       "updated": "2026-11-25",
