@@ -118,7 +118,7 @@
       "native_name": "Türkçe",
       "variant": "",
       "rtl": false,
-      "description": "AntiGem arayüzünün tam Türkçe çevirisi (7262/7262). AI ile çevrildi; henüz anadili konuşan biri tarafından gözden geçirilmedi.",
+      "description": "AntiGem arayüzünün Türkçe çevirisi (7338/7338). AI ile çevrildi; henüz anadili konuşan biri tarafından gözden geçirilmedi.",
       "authors": [
         {
           "name": "muazzezwq",
@@ -128,14 +128,14 @@
       ],
       "based_on": "",
       "app_version": "2.0.5-beta.5",
-      "translated": 7261,
+      "translated": 7338,
       "outdated": 0,
       "total": 7567,
       "path": "languages/tr/turkish.json",
-      "commit": "9626a8424afe9f807758ed262b1650e5eb7740a5",
+      "commit": "f8ca01fbd8fb5bb1d33c11181f2d47631b4a4b0a",
       "updated": "2026-11-25",
-      "size": 1084787,
-      "sha256": "8cc6260431bd87eb9016076553e86f8b49279cc9bc7c21b9a67f7207e67c64af"
+      "size": 1101689,
+      "sha256": "8490f0662dbabb2336ba78b923928959ac1fbd0baf2e74616108eb6275163c12"
     }
   ]
 }
