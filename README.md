@@ -21,7 +21,7 @@ tap the language to show the app in it.
 <!-- languages:start -->
 | Language | | Translated | By | File |
 |---|---|---|---|---|
-| Chinese (Simplified) | 简体中文 | 100% | [Zmin](https://github.com/Zmin2003) | [zh-hans](languages/zh-Hans/zh-hans.json) |
+| Chinese (Simplified) | 简体中文 | 98% | [Zmin](https://github.com/Zmin2003) | [zh-hans](languages/zh-Hans/zh-hans.json) |
 | Pirate English (TEST) · Test only, not for use | Pirate Speak | 66% | [AntiGem](https://github.com/Santoshkurmi) | [en-pirate-test](languages/en/en-pirate-test.json) |
 <!-- languages:end -->
 

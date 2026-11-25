@@ -3,8 +3,8 @@
   "format_version": 1,
   "repository": "Santoshkurmi/antigem_languages",
   "english": {
-    "texts": 7262,
-    "sha256": "6c17b65ff46d3a63cb42d8257f9800a1dfcdb6c58bdd06a1ddc1e5fdb4c912ed"
+    "texts": 7338,
+    "sha256": "76b7d8e5a38c8fdbfdd2f8689e811db85eefbcd84d099a7f8a8c23f9d4ec71f4"
   },
   "languages": [
     {
@@ -24,9 +24,9 @@
       ],
       "based_on": "",
       "app_version": "2.0.5-beta.4",
-      "translated": 7262,
+      "translated": 7261,
       "outdated": 0,
-      "total": 7262,
+      "total": 7338,
       "path": "languages/zh-Hans/zh-hans.json",
       "commit": "177f8bc87949e624bea27dcf0ff20d554b3573a7",
       "updated": "2026-11-25",
@@ -50,9 +50,9 @@
       ],
       "based_on": "",
       "app_version": "2.0.5-beta.5",
-      "translated": 4847,
+      "translated": 4846,
       "outdated": 0,
-      "total": 7262,
+      "total": 7338,
       "path": "languages/en/en-pirate-test.json",
       "commit": "74461ad1b6ded73da35bf7704e57127399b11f7f",
       "updated": "2026-11-25",
