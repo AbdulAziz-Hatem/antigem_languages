@@ -3,8 +3,8 @@
   "format_version": 1,
   "repository": "Santoshkurmi/antigem_languages",
   "english": {
-    "texts": 7567,
-    "sha256": "4c578ab7aa092bc7a351448ff0d2df4ffeed19fb7c0ea278848bdc18023e4748"
+    "texts": 7593,
+    "sha256": "1a342eeda1131c4e2daff727b7565d78671caddc803ca3e779497c7ab427f42a"
   },
   "languages": [
     {
@@ -23,15 +23,15 @@
         }
       ],
       "based_on": "",
-      "app_version": "2.0.5-beta.5",
-      "translated": 7360,
+      "app_version": "2.0.5-beta.6",
+      "translated": 7567,
       "outdated": 0,
-      "total": 7567,
+      "total": 7593,
       "path": "languages/ar/ar.json",
-      "commit": "e891c87abab85f93132e6c54d3202989d8d3e662",
-      "updated": "2026-11-25",
-      "size": 1262821,
-      "sha256": "141cdfffd47dd77984f2d4291138fd8699e05c741920126b32f4ee88589006fe"
+      "commit": "e330ab0847ad837ee4bce0d1aaf651ffc1ba822d",
+      "updated": "2026-11-26",
+      "size": 1285576,
+      "sha256": "8d7ddf5d62e97029d80c10036623cd62a8cee7980413bf981bd27fcb5b25f66e"
     },
     {
       "id": "zh-hans",
@@ -52,7 +52,7 @@
       "app_version": "2.0.5-beta.4",
       "translated": 7261,
       "outdated": 0,
-      "total": 7567,
+      "total": 7593,
       "path": "languages/zh-Hans/zh-hans.json",
       "commit": "177f8bc87949e624bea27dcf0ff20d554b3573a7",
       "updated": "2026-11-25",
@@ -78,7 +78,7 @@
       "app_version": "2.0.5-beta.5",
       "translated": 4846,
       "outdated": 0,
-      "total": 7567,
+      "total": 7593,
       "path": "languages/en/en-pirate-test.json",
       "commit": "74461ad1b6ded73da35bf7704e57127399b11f7f",
       "updated": "2026-11-25",
@@ -104,7 +104,7 @@
       "app_version": "2.0.5-beta.5",
       "translated": 7261,
       "outdated": 0,
-      "total": 7567,
+      "total": 7593,
       "path": "languages/ru/ru.json",
       "commit": "5e2d2e0798558d140fdc135e7542b1b284f10de3",
       "updated": "2026-11-25",
@@ -130,7 +130,7 @@
       "app_version": "2.0.5-beta.5",
       "translated": 7338,
       "outdated": 0,
-      "total": 7567,
+      "total": 7593,
       "path": "languages/tr/turkish.json",
       "commit": "f8ca01fbd8fb5bb1d33c11181f2d47631b4a4b0a",
       "updated": "2026-11-25",
