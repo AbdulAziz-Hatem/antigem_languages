@@ -22,10 +22,10 @@ tap the language to show the app in it.
 | Language | | Translated | By | File |
 |---|---|---|---|---|
 | Arabic | العربية | 99% | [AbdulAziz-Hatem](https://github.com/AbdulAziz-Hatem) | [ar](languages/ar/ar.json) |
-| Chinese (Simplified) | 简体中文 | 99% | [Zmin](https://github.com/Zmin2003) | [zh-hans](languages/zh-Hans/zh-hans.json) |
+| Chinese (Simplified) | 简体中文 | 100% | [Zmin](https://github.com/Zmin2003) | [zh-hans](languages/zh-Hans/zh-hans.json) |
 | Pirate English (TEST) · Test only, not for use | Pirate Speak | 63% | [AntiGem](https://github.com/Santoshkurmi) | [en-pirate-test](languages/en/en-pirate-test.json) |
-| Russian | Русский | 95% | [kuprizzz](https://github.com/Selyrith) | [ru](languages/ru/ru.json) |
-| Turkish | Türkçe | 99% | [muazzezwq](https://github.com/muazzezwq) | [turkish](languages/tr/turkish.json) |
+| Russian | Русский | 94% | [kuprizzz](https://github.com/Selyrith) | [ru](languages/ru/ru.json) |
+| Turkish | Türkçe | 98% | [muazzezwq](https://github.com/muazzezwq) | [turkish](languages/tr/turkish.json) |
 <!-- languages:end -->
 
 The table and [`index.json`](index.json) are rebuilt automatically after every change.
