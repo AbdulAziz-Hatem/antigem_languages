@@ -49,15 +49,15 @@
         }
       ],
       "based_on": "",
-      "app_version": "2.0.5-beta.4",
-      "translated": 7261,
+      "app_version": "2.0.5-beta.6",
+      "translated": 7567,
       "outdated": 0,
       "total": 7593,
       "path": "languages/zh-Hans/zh-hans.json",
-      "commit": "177f8bc87949e624bea27dcf0ff20d554b3573a7",
-      "updated": "2026-11-25",
-      "size": 1053466,
-      "sha256": "33ea96b663034b2c33f4175fff083596ff9fe5da399185ac84e884d755ffc829"
+      "commit": "921fd570fa4060dc59c2d5e7d1eb7ced41774609",
+      "updated": "2026-11-26",
+      "size": 1092144,
+      "sha256": "67597fef92b6234baa51e349ee58b17e33f3a4261be6219ba376089bffb7096d"
     },
     {
       "id": "en-pirate-test",
