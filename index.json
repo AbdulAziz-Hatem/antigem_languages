@@ -136,6 +136,34 @@
       "updated": "2026-11-25",
       "size": 1125720,
       "sha256": "3f7fda394874aaee77cf09df5fa80701dd1a882213e42f9bdcf75d2aa6cd559b"
+    },
+    {
+      "id": "vi",
+      "code": "vi",
+      "name": "Vietnamese",
+      "native_name": "Tiếng Việt",
+      "variant": "",
+      "rtl": false,
+      "description": "Bản dịch tiếng Việt cho AntiGem",
+      "authors": [
+        {
+          "name": "AntiGem AI"
+        },
+        {
+          "name": "anhthao121",
+          "github": "anhthao121"
+        }
+      ],
+      "based_on": "",
+      "app_version": "2.0.5-beta.7",
+      "translated": 7578,
+      "outdated": 0,
+      "total": 7661,
+      "path": "languages/vi/vi.json",
+      "commit": "b657435375b84917f06ab79e3cae08d5564c6970",
+      "updated": "2026-11-27",
+      "size": 757812,
+      "sha256": "ab29a0b390c07a8b092b7b8dee47ead2e6d3a60266c3bc1b3092c6f2ecd827b5"
     }
   ]
 }

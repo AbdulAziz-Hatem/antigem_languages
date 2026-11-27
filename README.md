@@ -26,6 +26,7 @@ tap the language to show the app in it.
 | Pirate English (TEST) · Test only, not for use | Pirate Speak | 63% | [AntiGem](https://github.com/Santoshkurmi) | [en-pirate-test](languages/en/en-pirate-test.json) |
 | Russian | Русский | 94% | [kuprizzz](https://github.com/Selyrith) | [ru](languages/ru/ru.json) |
 | Turkish | Türkçe | 98% | [muazzezwq](https://github.com/muazzezwq) | [turkish](languages/tr/turkish.json) |
+| Vietnamese | Tiếng Việt | 98% | AntiGem AI, [anhthao121](https://github.com/anhthao121) | [vi](languages/vi/vi.json) |
 <!-- languages:end -->
 
 The table and [`index.json`](index.json) are rebuilt automatically after every change.
