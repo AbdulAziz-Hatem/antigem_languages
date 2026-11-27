@@ -239,6 +239,10 @@ python3 tools/build_index.py           # check, then write index.json and the ta
 comments the link. If the file has problems, it explains them on the issue and removes the label: add it again once
 the issue has a fixed file. Then review the pull request, approve it and merge it.
 
+**Authors update their own packs:** when someone whose GitHub username is in a pack's `authors` sends an update to
+that pack (form or pull request), it's published without you, unless it changes the code, removes or adds GitHub
+authors, or drops many texts. See [CONTRIBUTING.md](CONTRIBUTING.md#updating-your-own-pack).
+
 - `.github/workflows/check.yml` checks every pull request with `main`'s own tools. Pull requests from anyone but
   the owner may only change `languages/`.
 - `.github/workflows/publish.yml` runs on every push to `main`, every day and by hand. It fetches the app's

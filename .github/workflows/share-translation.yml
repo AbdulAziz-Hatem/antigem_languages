@@ -1,19 +1,26 @@
 name: Share a translation → pull request
 
-# When a maintainer adds the "create-pr" label to a "Share a translation" issue, this downloads the attached file,
-# puts it in languages/<code>/<id>.json (an improvement is merged into the pack it improves), checks it and opens a
-# pull request that closes the issue. Only people who can triage issues can add labels, so strangers can't start it.
+# Two ways in, for "Share a translation" issues:
 #
-# If something's wrong with the file, it says so on the issue and removes the label: once the issue has a fixed
-# file, add the label again.
+# - An issue is opened or edited: if the person who opened it is one of the authors (GitHub username in "authors")
+#   of the pack it updates, and the update keeps the pack's code and people (tools/author_update.py), the file is
+#   checked and published to main right away, and the issue is closed. Anyone else's issue waits for a maintainer.
+#   A file with problems gets a comment saying what's wrong.
+#
+# - A maintainer adds the "create-pr" label: the file is put in languages/<code>/<id>.json (an improvement is merged
+#   into the pack it improves), checked, and a pull request that closes the issue is opened. Only people who can
+#   triage issues can add labels. If something's wrong, it says so on the issue and removes the label.
+#
+# The issue's text is untrusted: it only reaches tools/issue_to_pack.py through an environment variable, and that
+# script only reads it and the attached file as data.
 on:
   issues:
-    types: [labeled]
+    types: [opened, edited, labeled]
 
 permissions:
-  contents: write        # push the translation/issue-<n> branch (main is protected)
+  contents: write        # push the translation/issue-<n> branch
   pull-requests: write   # open the pull request
-  issues: write          # comment on the issue, remove the label
+  issues: write          # comment on the issue, remove the label, close it
   actions: write         # start the check on the new branch
 
 concurrency:
@@ -21,37 +28,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  make-pr:
-    if: github.event.label.name == 'create-pr' && !github.event.issue.pull_request
+  share:
+    if: >-
+      !github.event.issue.pull_request && github.event.issue.state == 'open' &&
+      (github.event.action != 'labeled' || github.event.label.name == 'create-pr')
     runs-on: ubuntu-latest
     env:
+      MODE: ${{ github.event.action == 'labeled' && 'label' || 'auto' }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       ISSUE_NUMBER: ${{ github.event.issue.number }}
       ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
-      # the issue's text is untrusted: it only ever reaches the script through this variable
       ISSUE_BODY: ${{ github.event.issue.body }}
       BRANCH: translation/issue-${{ github.event.issue.number }}
       BASE: ${{ github.event.repository.default_branch }}
     steps:
+      # the deploy key lets an author's update onto main (the ruleset lets deploy keys through)
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
+          ssh-key: ${{ secrets.PUBLISH_DEPLOY_KEY }}
 
-      - name: Turn the attached file into a pack
+      - name: Read the issue and its file
         id: pack
         run: python3 tools/issue_to_pack.py
 
       - name: Check the pack
+        if: steps.pack.outputs.action == 'pr' || steps.pack.outputs.action == 'publish'
         env:
           PACK_PATH: ${{ steps.pack.outputs.path }}
         run: |
-          set -o pipefail
           if ! GITHUB_ACTIONS=false python3 tools/build_index.py --check "$PACK_PATH" > "$RUNNER_TEMP/check.txt" 2>&1; then
             cat "$RUNNER_TEMP/check.txt"
             {
-              echo "I couldn't turn this into a pull request yet: the file has problems the app or the check refuses."
+              echo "I couldn't use this file yet: it has problems the app or the check refuses."
               echo
               echo '```'
               head -c 6000 "$RUNNER_TEMP/check.txt"
@@ -63,13 +74,45 @@ jobs:
           fi
           cat "$RUNNER_TEMP/check.txt"
 
-      - name: Commit it to a branch
-        id: commit
-        env:
-          PACK_PATH: ${{ steps.pack.outputs.path }}
+      - name: Set up git
+        if: steps.pack.outputs.action == 'pr' || steps.pack.outputs.action == 'publish'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # ---------------------------------------------------------------- an author's update: publish it
+      - name: Publish the author's update
+        if: steps.pack.outputs.action == 'publish'
+        env:
+          PACK_PATH: ${{ steps.pack.outputs.path }}
+        run: |
+          git add -- "$PACK_PATH"
+          if git diff --cached --quiet; then
+            gh issue close "$ISSUE_NUMBER" --reason "not planned" --comment "Thanks! The published pack already has exactly these texts and authors, so there was nothing to change."
+            exit 0
+          fi
+          git commit --quiet -F "$RUNNER_TEMP/pack-commit.txt"
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:refs/heads/$BASE"; then
+              gh issue close "$ISSUE_NUMBER" --comment "Thanks! You're one of the authors of \`$PACK_PATH\`, so your update is published: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$(git rev-parse HEAD)
+
+          The app offers the update within a few minutes."
+              exit 0
+            fi
+            git pull --rebase --quiet origin "$BASE"
+          done
+          exit 1
+
+      - name: Tell the author why a maintainer has to look at it
+        if: steps.pack.outputs.action == 'review'
+        run: gh issue comment "$ISSUE_NUMBER" --body-file "$RUNNER_TEMP/pack-comment.md"
+
+      # ---------------------------------------------------------------- the create-pr label: a pull request
+      - name: Commit it to a branch
+        if: steps.pack.outputs.action == 'pr'
+        env:
+          PACK_PATH: ${{ steps.pack.outputs.path }}
+        run: |
           git checkout -B "$BRANCH"
           git add -- "$PACK_PATH"
           if git diff --cached --quiet; then
@@ -80,6 +123,7 @@ jobs:
           git push --force origin "HEAD:refs/heads/$BRANCH"
 
       - name: Open the pull request
+        if: steps.pack.outputs.action == 'pr'
         env:
           TITLE: ${{ steps.pack.outputs.title }}
         run: |
@@ -102,7 +146,7 @@ jobs:
         if: failure()
         run: |
           if [ ! -s "$RUNNER_TEMP/pack-comment.md" ]; then
-            echo "Something went wrong while making the pull request. A maintainer will look at it: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$RUNNER_TEMP/pack-comment.md"
+            echo "Something went wrong while handling this file. A maintainer will look at it: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$RUNNER_TEMP/pack-comment.md"
           fi
           gh issue comment "$ISSUE_NUMBER" --body-file "$RUNNER_TEMP/pack-comment.md"
-          gh issue edit "$ISSUE_NUMBER" --remove-label create-pr || true
+          if [ "$MODE" = "label" ]; then gh issue edit "$ISSUE_NUMBER" --remove-label create-pr || true; fi

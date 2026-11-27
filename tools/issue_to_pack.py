@@ -2,7 +2,13 @@
 """
 Turns a "Share a translation" issue into a language pack file, for the share-translation workflow.
 
-    ISSUE_BODY=… ISSUE_NUMBER=12 ISSUE_AUTHOR=octocat python3 tools/issue_to_pack.py
+    ISSUE_BODY=… ISSUE_NUMBER=12 ISSUE_AUTHOR=octocat [MODE=auto] python3 tools/issue_to_pack.py
+
+Two modes (the "action" output says what to do next):
+    label (default)  a maintainer added the create-pr label: make the pack for a pull request  → action=pr
+    auto             the issue was opened or edited: if the person who opened it is an author of the pack it
+                     updates (tools/author_update.py), make the merged pack to publish right away → action=publish,
+                     or explain why a maintainer has to look at it → action=review; else nothing → action=none
 
 It reads the issue form, downloads the attached file (a .json, or a .zip with one .json in it) from GitHub's
 attachment storage, and writes it to languages/<code>/<id>.json. An improvement of a pack that's already here is
@@ -15,7 +21,7 @@ It writes, in $RUNNER_TEMP (or the system's temp folder):
     pack-commit.txt   the commit message
     pack-pr.md        the pull request's description
     pack-comment.md   on failure, what to tell the person on the issue
-and the step outputs path, id, title (to $GITHUB_OUTPUT). Exit code 1 when the issue can't be turned into a pack.
+and the step outputs action, path, id, title (to $GITHUB_OUTPUT). Exit code 1 when the issue can't be turned into a pack.
 Needs Python 3.8+, nothing else.
 """
 import io
@@ -31,6 +37,8 @@ from collections import OrderedDict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_index import CODE, GITHUB, LANGUAGES, PACK_ID, ROOT, REPOSITORY, pack_files  # noqa: E402
+import author_update  # noqa: E402
+from author_update import same_author  # noqa: E402
 
 MAX_BYTES = 20 * 1024 * 1024
 TEMP = os.environ.get('RUNNER_TEMP') or tempfile.gettempdir()
@@ -174,12 +182,6 @@ def slug(text):
     return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')[:30].strip('-')
 
 
-def same_author(a, b):
-    if a.get('github') and b.get('github'):
-        return a['github'].lower() == b['github'].lower()
-    return a.get('name', '').strip().lower() == b.get('name', '').strip().lower()
-
-
 def add_authors(authors, new):
     for a in new:
         if isinstance(a, dict) and a.get('name') and not any(same_author(a, b) for b in authors if isinstance(b, dict)):
@@ -204,41 +206,56 @@ def merge_into(old, new):
     return out
 
 
-def place(o, kind, packs):
-    """→ (path, pack id, the pack to write, the existing pack it improves or None)."""
-    # the id: the file's own "id", else the code (plus the variant: ne-formal). Not the file name: the app saves
-    # files as antigem-language-<name>.json, which isn't a good id.
+def find_target(o, kind, packs):
+    """The id of the pack already here that this file updates, or None. A pack of the same language and variant
+    counts when the file names it (its id or based_on) or has its id; for an improvement, the only pack of that
+    language (and variant) is enough."""
     code = o['code']
     variant = slug(o.get('variant') or '')
-    candidates = [o.get('id'), code.lower() + ('-' + variant if variant else ''), code.lower()]
-    pack_id = next((c for c in candidates if isinstance(c, str) and PACK_ID.match(c) and len(c) <= 60), None)
-
+    same = OrderedDict((i, p) for i, (_, p) in packs.items() if p.get('code') == code)
+    same_variant = [i for i, p in same.items() if slug(p.get('variant') or '') == variant]
+    if isinstance(o.get('id'), str) and o['id'] in same:
+        return o['id']
+    for c in (code.lower() + ('-' + variant if variant else ''), o.get('based_on')):
+        if isinstance(c, str) and c in same_variant:
+            return c
     if kind == 'improvement':
-        target = None
-        for c in (o.get('based_on'), pack_id):
-            if isinstance(c, str) and c in packs and packs[c][1].get('code') == code:
-                target = c
-                break
+        if isinstance(o.get('based_on'), str) and o['based_on'] in same:
+            return o['based_on']
+        if len(same_variant) == 1:
+            return same_variant[0]
+        if len(same) == 1:
+            return next(iter(same))
+    return None
+
+
+def place(o, kind, packs):
+    """→ (path, pack id, the pack to write, the existing pack it improves or None)."""
+    code = o['code']
+    if kind == 'improvement':
+        target = find_target(o, kind, packs)
         if target is None:
-            same_code = [i for i, (_, p) in packs.items() if p.get('code') == code]
-            if len(same_code) == 1:
-                target = same_code[0]
-        if target is None:
-            raise Refused('I couldn\'t tell which pack this improves (there\'s no pack with the code `%s` and the id '
-                          '`%s` here). If it\'s a new language, choose *A new language* in the form.' % (code, pack_id))
+            raise Refused('I couldn\'t tell which pack this improves (there\'s no pack with the code `%s` here, or '
+                          'several). If it\'s a new language, choose *A new language* in the form.' % code)
         path, old = packs[target]
         return path, target, merge_into(old, o), target
 
+    # the id: the file's own "id", else the code (plus the variant: ne-formal). Not the file name: the app saves
+    # files as antigem-language-<name>.json, which isn't a good id.
+    variant = slug(o.get('variant') or '')
+    derived = code.lower() + ('-' + variant if variant else '')
+    pack_id = next((c for c in (o.get('id'), derived, code.lower())
+                    if isinstance(c, str) and PACK_ID.match(c) and len(c) <= 60), None)
     if pack_id is None:
         raise Refused('The pack needs an id: lowercase letters, digits and hyphens, like `ne` or `hi-latn`.')
-    if pack_id in packs:
-        alt = '%s-%s' % (pack_id, variant) if variant and not pack_id.endswith('-' + variant) else None
-        if alt and alt not in packs and PACK_ID.match(alt):
-            pack_id = alt
-        else:
-            raise Refused('There\'s already a pack with the id `%s` (`%s`). If this improves it, choose *Improvements '
-                          'to a pack that\'s already here* in the form; if it\'s another style, give it a variant '
-                          '(in the app: **⋮ → Name & details**) and send it again.' % (pack_id, packs[pack_id][0]))
+    clash = [i for i, (_, p) in packs.items() if p.get('code') == code and slug(p.get('variant') or '') == variant]
+    if pack_id in packs and not clash and derived not in packs and PACK_ID.match(derived):
+        pack_id = derived
+    if pack_id in packs or clash:
+        other = pack_id if pack_id in packs else clash[0]
+        raise Refused('There\'s already a pack for this language here: `%s`. If this improves it, choose '
+                      '*Improvements to a pack that\'s already here* in the form; if it\'s another style, give it a '
+                      'variant (in the app: **⋮ → Name & details**) and send it again.' % packs[other][0])
     if o.get('id') not in (None, '', pack_id):
         o['id'] = pack_id
     return 'languages/%s/%s.json' % (code, pack_id), pack_id, o, None
@@ -261,25 +278,49 @@ def output(**values):
         print('%s=%s' % (k, v))
 
 
-def run(body, number, author):
+def run(body, number, author, mode):
     sections = form_sections(body)
+    if mode == 'auto' and not ({'The file', 'Is it a new pack or an improvement?'} <= set(sections)):
+        print('not a "Share a translation" issue')
+        output(action='none')
+        return
     kind = kind_of(section(sections, 'Is it a new pack'))
     urls = attachment_urls(sections, body)
     if not urls:
         raise Refused('I couldn\'t find the attached file. Edit the issue and drag the language file (or its zip) '
-                      'into **The file**, then a maintainer will try again.')
+                      'into **The file**.')
     if len(urls) > 1:
         raise Refused('There are %d attached files: please attach only the language file.' % len(urls))
     name = os.path.basename(urllib.parse.urlparse(urls[0]).path)
     _, data = json_from_attachment(name, download(urls[0]))
     o = parse_pack(data)
-
     packs = existing_packs()
-    path, pack_id, pack, improves = place(o, kind, packs)
-    authors = add_authors(list(pack.get('authors') or []), form_authors(section(sections, 'Who made it')))
-    if not authors and author:
-        authors = [OrderedDict([('name', author), ('github', author)])]
-    pack['authors'] = authors
+    people = form_authors(section(sections, 'Who made it'))
+
+    if mode == 'auto':
+        # published right away only when the person who opened the issue is an author of the pack it updates
+        target = find_target(o, kind, packs)
+        if target is None or not author_update.is_author(packs[target][1], author):
+            print('@%s isn\'t an author of a pack this updates: a maintainer adds the create-pr label' % author)
+            output(action='none')
+            return
+        path, old = packs[target]
+        pack = merge_into(old, o)
+        pack['authors'] = add_authors(pack['authors'], people)
+        reasons = author_update.review_reasons(old, pack, author, whole_file=False)
+        if reasons:
+            write('pack-comment.md', 'Thanks! You\'re one of the authors of `%s`, but this update needs a '
+                                     'maintainer\'s review first because:\n\n%s\nA maintainer will look at it soon.\n'
+                  % (path, ''.join('- %s\n' % r for r in reasons)))
+            output(action='review')
+            return
+        pack_id, improves = target, target
+    else:
+        path, pack_id, pack, improves = place(o, kind, packs)
+        authors = add_authors(list(pack.get('authors') or []), people)
+        if not authors and author:
+            authors = [OrderedDict([('name', author), ('github', author)])]
+        pack['authors'] = authors
 
     full = os.path.join(ROOT, *path.split('/'))
     if not os.path.realpath(full).startswith(os.path.realpath(LANGUAGES) + os.sep):
@@ -292,8 +333,14 @@ def run(body, number, author):
     if pack.get('variant'):
         lang += ' · ' + pack['variant']
     title = '%s %s (%s)' % ('Update' if improves else 'Add', lang, pack.get('code'))
+    if mode == 'auto':
+        write('pack-commit.txt', '%s\n\nPublished by its author @%s from the "Share a translation" issue #%s.\n'
+              % (title, author, number))
+        output(action='publish', path=path, id=pack_id, title=title)
+        return
+
     credits = '\n'.join('- %s%s%s' % (a['name'], ' (@%s)' % a['github'] if a.get('github') else '',
-                                       ', ' + a['role'] if a.get('role') else '') for a in authors)
+                                       ', ' + a['role'] if a.get('role') else '') for a in pack['authors'])
     notes = section(sections, 'Anything else')
     write('pack-commit.txt', '%s\n\nFrom the "Share a translation" issue #%s by @%s.\n' % (title, number, author))
     write('pack-pr.md', '\n'.join([
@@ -308,19 +355,23 @@ def run(body, number, author):
         'read it.', '',
         'Closes #%s' % number, '',
     ]))
-    output(path=path, id=pack_id, title=title)
+    output(action='pr', path=path, id=pack_id, title=title)
 
 
 def main():
+    mode = 'auto' if os.environ.get('MODE') == 'auto' else 'label'
     try:
-        run(os.environ.get('ISSUE_BODY', ''), os.environ.get('ISSUE_NUMBER', '?'), os.environ.get('ISSUE_AUTHOR', ''))
+        run(os.environ.get('ISSUE_BODY', ''), os.environ.get('ISSUE_NUMBER', '?'), os.environ.get('ISSUE_AUTHOR', ''),
+            mode)
         return 0
     except Refused as e:
         message = str(e)
     except Exception as e:  # a download that failed, a bug…
         message = 'Something went wrong while reading the file (%s: %s). A maintainer will look at it.' % (
             type(e).__name__, e)
-    write('pack-comment.md', 'I couldn\'t turn this into a pull request yet.\n\n%s\n' % message)
+    first = 'There\'s a problem with the attached file.' if mode == 'auto' else \
+        'I couldn\'t turn this into a pull request yet.'
+    write('pack-comment.md', '%s\n\n%s\n' % (first, message))
     print(message, file=sys.stderr)
     return 1
 

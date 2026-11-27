@@ -97,6 +97,20 @@ Your editor can check the file as you type: [`schema/antigem-language.schema.jso
 - **Don't rename a published pack.** The app knows a downloaded language by its id, so a new id is a new language
   for everyone who downloaded the old one.
 
+### Updating your own pack
+
+If your GitHub username is in a pack's `authors`, your updates to that pack are published **without waiting for a
+maintainer**, whichever way you send them:
+
+- **With the form:** send it with *Share a translation* as usual. It's checked and published within minutes, and
+  the issue is closed with a link.
+- **With a pull request:** change only your pack's file. When the check passes, it's approved and merged
+  automatically.
+
+A maintainer still looks first when the update changes the language code, removes someone from `authors`, adds a
+new GitHub username to `authors` (people listed there can publish, so new ones are approved once), or (in a pull
+request) drops more than a fifth of the pack's texts. You'll get a comment saying why.
+
 ### Improving an existing pack
 
 Edit its file in a pull request (or duplicate it in the app and send the result: we merge it into the original).
@@ -127,6 +141,10 @@ share it under GPL-3.0-or-later.** You keep the credit: your name stays in the p
 
 ## For maintainers
 
+- **Authors publish their own updates:** a pull request or a *Share a translation* issue from someone whose GitHub
+  username is in the pack's `authors` (on `main`) is checked and published without you, unless it changes the
+  code, removes or adds GitHub authors, or drops many texts (`tools/author_update.py`,
+  `.github/workflows/author-merge.yml`). Adding a GitHub username to `authors` gives that person this right.
 - **Turning a "Share a translation" issue into a pull request:** add the `create-pr` label to the issue. A workflow
   downloads the attached file, puts it in `languages/<code>/<id>.json` (an improvement is merged into the pack it
   improves: its texts replace the old ones, every author stays), checks it, opens a pull request that closes the

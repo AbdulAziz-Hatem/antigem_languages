@@ -1,0 +1,102 @@
+name: Authors update their own packs
+
+# When the check passes on a pull request that changes one existing pack, and the pull request's author is one of
+# that pack's authors (their GitHub username in "authors" of the pack on main), this approves and merges it, so
+# authors can keep their language up to date without waiting for a maintainer. tools/author_update.py has the rules:
+# the update keeps the pack's language code, removes nobody from "authors", adds no new GitHub usernames there
+# (people listed can publish, so a maintainer approves new ones once) and doesn't drop more than 20% of the texts.
+# Anything else waits for a maintainer as usual.
+#
+# It runs after "Check language packs" (workflow_run), in this repository with main's own files: it never runs code
+# from the pull request, it only reads the changed pack as JSON data.
+on:
+  workflow_run:
+    workflows: ["Check language packs"]
+    types: [completed]
+
+permissions:
+  contents: write        # merge
+  pull-requests: write   # approve, comment
+  actions: write         # start the publish workflow (a merge made by a workflow doesn't start it)
+
+concurrency:
+  group: author-merge-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      BASE: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Find the pull request and what it changes
+        id: pr
+        run: |
+          gh pr list --state open --base "$BASE" --limit 200 --json number,headRefOid,author,isDraft > "$RUNNER_TEMP/prs.json"
+          pr=$(jq -c --arg sha "$HEAD_SHA" '[.[] | select(.headRefOid == $sha and (.isDraft | not))] | first // empty' "$RUNNER_TEMP/prs.json")
+          if [ -z "$pr" ]; then echo "No open pull request is at $HEAD_SHA (closed, a draft, or new commits since)."; exit 0; fi
+          number=$(jq -r '.number' <<<"$pr")
+          login=$(jq -r '.author.login' <<<"$pr")
+          if ! [[ "$login" =~ ^[A-Za-z0-9-]{1,39}$ ]]; then echo "#$number is by $login (a bot or an app): skipped"; exit 0; fi
+
+          gh api "repos/$GH_REPO/pulls/$number/files" --paginate --jq '.[] | [.status, .filename] | @tsv' > "$RUNNER_TEMP/files.tsv"
+          if [ "$(wc -l < "$RUNNER_TEMP/files.tsv")" -ne 1 ]; then echo "#$number changes more than one file: a maintainer reviews it"; exit 0; fi
+          IFS=$'\t' read -r status file < "$RUNNER_TEMP/files.tsv"
+          if [ "$status" != "modified" ] || ! [[ "$file" =~ ^languages/[A-Za-z0-9-]+/[a-z0-9-]+\.json$ ]] || [ ! -f "$file" ]; then
+            echo "#$number doesn't just update a pack that's on $BASE ($status $file): a maintainer reviews it"; exit 0
+          fi
+
+          # the pull request's version of the pack, as data (nothing from the pull request is checked out or run)
+          git fetch --no-tags --quiet origin "refs/pull/$number/head"
+          if [ "$(git rev-parse FETCH_HEAD)" != "$HEAD_SHA" ]; then echo "#$number has new commits: their check decides"; exit 0; fi
+          git show "$HEAD_SHA:$file" > "$RUNNER_TEMP/updated.json"
+          { echo "number=$number"; echo "login=$login"; echo "file=$file"; } >> "$GITHUB_OUTPUT"
+
+      - name: Is it the pack's author, keeping the pack's code and people?
+        id: author
+        if: steps.pr.outputs.number
+        env:
+          PACK: ${{ steps.pr.outputs.file }}
+          LOGIN: ${{ steps.pr.outputs.login }}
+        run: python3 tools/author_update.py "$PACK" "$RUNNER_TEMP/updated.json" "$LOGIN"
+
+      - name: Approve and merge
+        if: steps.author.outputs.ok == 'true'
+        env:
+          NUMBER: ${{ steps.pr.outputs.number }}
+          LOGIN: ${{ steps.pr.outputs.login }}
+          PACK: ${{ steps.pr.outputs.file }}
+        run: |
+          gh pr review "$NUMBER" --approve --body "@$LOGIN is one of the authors of \`$PACK\`, and the check passed: merging it automatically."
+          gh pr merge "$NUMBER" --merge --match-head-commit "$HEAD_SHA"
+          gh workflow run publish.yml --ref "$BASE"
+          gh pr comment "$NUMBER" --body "Merged ✅ Thanks, @$LOGIN! The app offers the update within a few minutes."
+
+      - name: Tell the author why a maintainer has to look at it
+        if: steps.author.outputs.author == 'true' && steps.author.outputs.ok != 'true'
+        env:
+          NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          {
+            echo "Thanks! You're one of this pack's authors, but this pull request needs a maintainer's review because:"
+            echo
+            cat "$RUNNER_TEMP/author-reasons.md"
+            echo
+            echo "A maintainer will look at it soon."
+          } > "$RUNNER_TEMP/comment.md"
+          gh pr comment "$NUMBER" --body-file "$RUNNER_TEMP/comment.md"
+
+      - name: Say so if the merge failed
+        if: failure() && steps.author.outputs.ok == 'true'
+        env:
+          NUMBER: ${{ steps.pr.outputs.number }}
+        run: gh pr comment "$NUMBER" --body "I couldn't merge this automatically. A maintainer will look at it." || true
