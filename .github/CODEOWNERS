@@ -1,0 +1,12 @@
+# Changes to these need the owner's review (the rule on main requires a code owner's approval).
+# Packs in languages/ have no code owner here: any reviewer with write access can approve them.
+
+/.github/          @Santoshkurmi
+/tools/            @Santoshkurmi
+/schema/           @Santoshkurmi
+/en.json           @Santoshkurmi
+/index.json        @Santoshkurmi
+/README.md         @Santoshkurmi
+/CONTRIBUTING.md   @Santoshkurmi
+/LICENSE           @Santoshkurmi
+/.gitattributes    @Santoshkurmi

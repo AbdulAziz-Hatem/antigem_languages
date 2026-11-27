@@ -5,6 +5,7 @@
 **New pack or improving one?**
 
 - [ ] The file is `languages/<code>/<id>.json` and `"code"` matches the folder
+- [ ] It only changes files in `languages/` (the check refuses other changes in translation pull requests)
 - [ ] `authors` lists everyone who worked on it (with GitHub usernames if they like)
 - [ ] Every `{placeholder}` is kept exactly as in English
 - [ ] A person who speaks the language read the texts (also when an AI translated them)
