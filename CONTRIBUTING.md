@@ -134,7 +134,9 @@ your copy was made from and take **only the texts you changed** since then:
 - a text translated from older English never replaces one translated from today's English;
 - a text both you and someone else changed since your copy is shown to a maintainer, who picks one.
 
-The bot's reply on a *Share a translation* issue says how many texts are taken and how many stay. Still, for the
+The bot's reply on a *Share a translation* issue says how many texts are taken and how many stay. A pull request
+is merged as it is, so there the bot comments instead when your file would bring back older texts, and lists them for
+you to fix. Still, for the
 least work, download the language again in an up-to-date app before you start.
 
 ---

@@ -105,3 +105,64 @@ jobs:
         env:
           NUMBER: ${{ steps.pr.outputs.number }}
         run: gh pr comment "$NUMBER" --body "I couldn't merge this automatically. A maintainer will look at it." || true
+
+  # Every pull request that updates packs (from anyone): one comment, updated on each push, when it would bring back
+  # texts older than the published ones. A pull request is merged as it is (the form only takes the changed texts),
+  # so this tells its author what to fix, and the maintainer sees it before approving.
+  history-note:
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      BASE: ${{ github.event.repository.default_branch }}
+      MARK: '<!-- pack-history-note -->'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Compare the updated packs with their history
+        run: |
+          [ -f tools/pack_history.py ] || exit 0
+          gh pr list --state open --base "$BASE" --limit 200 --json number,headRefOid,author > "$RUNNER_TEMP/prs.json"
+          pr=$(jq -c --arg sha "$HEAD_SHA" '[.[] | select(.headRefOid == $sha)] | first // empty' "$RUNNER_TEMP/prs.json")
+          if [ -z "$pr" ]; then echo "No open pull request is at $HEAD_SHA"; exit 0; fi
+          number=$(jq -r '.number' <<<"$pr")
+          login=$(jq -r '.author.login' <<<"$pr")
+          # the bot's own pull requests (from Share a translation issues) have this in their description already
+          if ! [[ "$login" =~ ^[A-Za-z0-9-]{1,39}$ ]]; then echo "#$number is by $login: skipped"; exit 0; fi
+
+          # what main would get after the merge, read as data (nothing from the pull request is run)
+          git fetch --no-tags --quiet origin "refs/pull/$number/merge" || { echo "#$number can't be merged as it is"; exit 0; }
+          merge=$(git rev-parse FETCH_HEAD)
+          if [ "$(git rev-parse "$merge^2")" != "$HEAD_SHA" ]; then echo "#$number has new commits: their check decides"; exit 0; fi
+
+          : > "$RUNNER_TEMP/note.md"
+          git diff --name-only --no-renames --diff-filter=M HEAD "$merge" | { grep -E '^languages/[A-Za-z0-9-]+/[a-z0-9-]+\.json$' || true; } | while read -r f; do
+            git show "$merge:$f" > "$RUNNER_TEMP/updated.json"
+            python3 tools/pack_history.py "$f" "$RUNNER_TEMP/updated.json" --note "$RUNNER_TEMP/note.md"
+          done
+
+          if [ -s "$RUNNER_TEMP/note.md" ]; then
+            {
+              echo "$MARK"
+              echo "### Compared with the published pack"
+              echo
+              cat "$RUNNER_TEMP/note.md"
+              echo "**How to fix it:** for 🕰️ and 🇬🇧 texts, put the published text back in your file (see the pack on \`$BASE\`), or start again from the newest version: in an up-to-date app, download the language again and redo your changes. For ⚠️ texts, a maintainer picks one. This note updates when you push again."
+            } > "$RUNNER_TEMP/comment.md"
+            tools/sticky_comment.sh "$number" "$RUNNER_TEMP/comment.md" "$MARK"
+          else
+            # an earlier note on this pull request is out of date now: say it's fixed
+            old=$(gh api "repos/$GH_REPO/issues/$number/comments" --paginate --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$MARK\"))) | .id" | tail -n 1)
+            if [ -n "$old" ]; then
+              printf '%s\n### Compared with the published pack\n\n✅ Fixed: this pull request no longer brings back older texts.\n' "$MARK" > "$RUNNER_TEMP/comment.md"
+              tools/sticky_comment.sh "$number" "$RUNNER_TEMP/comment.md" "$MARK"
+            else
+              echo "Nothing older is brought back."
+            fi
+          fi
