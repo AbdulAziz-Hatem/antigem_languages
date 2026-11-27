@@ -1,5 +1,5 @@
 name: Share a translation
-description: Send a language you made in the app (no git needed). We turn it into a pull request and credit you.
+description: Send a language you made or updated in the app (no git needed). We publish it and credit you.
 title: "Translation: "
 labels: ["translation"]
 body:
@@ -8,24 +8,11 @@ body:
       value: |
         Thanks! In the app: **Settings → Language → ⋮ on your language → Send to the community → Save the file**,
         then attach that file below. If GitHub refuses the `.json` file, zip it first.
-  - type: input
-    id: language
-    attributes:
-      label: Language
-      description: Its name in English and its code
-      placeholder: Nepali (ne)
-    validations:
-      required: true
-  - type: dropdown
-    id: kind
-    attributes:
-      label: Is it a new pack or an improvement?
-      options:
-        - A new language
-        - A new variant of a language that's already here (another style or script)
-        - Improvements to a pack that's already here
-    validations:
-      required: true
+
+        **No need to say which language it is:** the file says it. If a pack with the same language code and
+        variant is [already here](https://github.com/SantoshKurmi/antigem_languages#languages), your texts update
+        it; otherwise it becomes a new pack. To add another style or script of a language that's here, give it a
+        variant in the app first (**⋮ → Name & details**, e.g. *Formal* or *Latin letters*).
   - type: textarea
     id: authors
     attributes:

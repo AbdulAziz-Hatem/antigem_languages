@@ -6,7 +6,7 @@ name: Check language packs
 # so a pull request can't make its own check pass by changing the checker. Only the owner's pull requests
 # are checked with their own tools (to test changes to the tools).
 #
-# Pull requests from anyone else may only change files in languages/.
+# Pull requests from anyone else may only change pack files: languages/<code>/<id>.json.
 #
 # workflow_dispatch runs the same check on a branch (the "Share a translation" workflow starts it on the
 # pull requests it opens, because pull requests opened by a workflow don't start other workflows).
@@ -42,20 +42,21 @@ jobs:
           fi
           git cat-file -e "$HEAD_SHA^{commit}"
 
-      - name: Pull requests change only languages/
+      - name: Pull requests change only pack files
         if: github.event_name == 'pull_request' && env.TRUSTED != 'true'
         run: |
-          outside=$(git diff --name-only --no-renames "$BASE_SHA...$HEAD_SHA" | grep -v '^languages/' || true)
-          if [ -n "$outside" ]; then
-            echo "This pull request also changes files outside languages/:"
-            echo "$outside" | sed 's/^/  /'
-            echo "$outside" | while read -r f; do
-              echo "::error file=$f::Translation pull requests may only change files in languages/ (index.json and the README table are rebuilt after the merge)"
+          other=$(git diff --name-only --no-renames "$BASE_SHA...$HEAD_SHA" | grep -vE '^languages/[A-Za-z0-9-]+/[a-z0-9-]+\.json$' || true)
+          if [ -n "$other" ]; then
+            echo "This pull request changes files that aren't language packs:"
+            echo "$other" | sed 's/^/  /'
+            echo "$other" | while read -r f; do
+              echo "::error file=$f::Translation pull requests may only change pack files: languages/<code>/<id>.json, like languages/ne/ne.json (index.json and the README table are rebuilt after the merge)"
             done
-            echo "Please remove these changes, or open a separate pull request (or an issue) for them."
+            echo "A pack is languages/<code>/<id>.json: the folder is the language code, the file name is the pack's id (lowercase letters, digits and hyphens)."
+            echo "Please remove the other changes, or open a separate pull request (or an issue) for them."
             exit 1
           fi
-          echo "Only languages/ changed."
+          echo "Only pack files changed."
 
       - name: Use the pull request's language files with main's tools
         run: |

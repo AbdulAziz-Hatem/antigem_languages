@@ -7,8 +7,9 @@ name: Share a translation → pull request
 #   checked and published to main right away, and the issue is closed. Anyone else's issue waits for a maintainer.
 #   A file with problems gets a comment saying what's wrong.
 #
-# - A maintainer adds the "create-pr" label: the file is put in languages/<code>/<id>.json (an improvement is merged
-#   into the pack it improves), checked, and a pull request that closes the issue is opened. Only people who can
+# - A maintainer adds the "create-pr" label: the file goes where it says (its "code" is the folder; the pack with the
+#   same code and variant is updated, else it's a new pack), is checked, and a pull request that closes the issue
+#   is opened. Only people who can
 #   triage issues can add labels. If something's wrong, it says so on the issue and removes the label.
 #
 # The issue's text is untrusted: it only reaches tools/issue_to_pack.py through an environment variable, and that
@@ -126,6 +127,7 @@ jobs:
         if: steps.pack.outputs.action == 'pr'
         env:
           TITLE: ${{ steps.pack.outputs.title }}
+          DETECTED: ${{ steps.pack.outputs.detected }}
         run: |
           url=$(gh pr list --head "$BRANCH" --state open --json url --jq '.[0].url // ""')
           if [ -n "$url" ]; then
@@ -137,7 +139,7 @@ jobs:
           fi
           # a pull request opened by a workflow doesn't start other workflows: start the check by hand
           gh workflow run check.yml --ref "$BRANCH"
-          gh issue comment "$ISSUE_NUMBER" --body "Thanks! I $verb a pull request with your translation: $url
+          gh issue comment "$ISSUE_NUMBER" --body "Thanks! I $verb a pull request with your translation ($DETECTED): $url
 
           Once it's reviewed and merged, the language shows up in the app within a few minutes. This issue closes then."
           gh issue edit "$ISSUE_NUMBER" --remove-label create-pr

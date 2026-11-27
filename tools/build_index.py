@@ -55,6 +55,11 @@ def text_hash(v):
     return java_hash(str(v))
 
 
+def variant_key(v):
+    """How variants are compared: "Formal", " formal " and "FORMAL" are the same; no variant is ""."""
+    return ' '.join(str(v or '').casefold().split())
+
+
 def placeholders(v):
     texts = v.values() if isinstance(v, dict) else [v]
     return {m for t in texts for m in PLACEHOLDER.findall(str(t))}
@@ -356,9 +361,11 @@ def write_if_changed(path, text):
 def main(argv):
     check_only = '--check' in argv
     files = [os.path.abspath(a) for a in argv if not a.startswith('--')] or pack_files()
+    # packs already in the history first: when two clash (same id, or same language and variant), the new one is wrong
+    files.sort(key=lambda f: (git('log', '-1', '--format=%H', '--', os.path.relpath(f, ROOT)) == '', f))
     english = load_english()
 
-    packs, failed, seen = [], 0, {}
+    packs, failed, seen, seen_variant = [], 0, {}, {}
     for path in files:
         rep = Report(path)
         entry = check_pack(path, english, rep)
@@ -367,6 +374,14 @@ def main(argv):
             if other:
                 rep.error('the id "%s" is taken by %s: pick another file name' % (entry['id'], other))
             seen[entry['id']] = entry['path']
+            # one pack per language and variant: that's how a translation sent with the form finds its pack
+            key = (entry['code'], variant_key(entry['variant']))
+            other = seen_variant.get(key)
+            if other:
+                rep.error('%s is already the %s pack%s: give this one a different "variant" (like "Formal" or '
+                          '"Latin letters"), or update that pack instead' % (
+                              other, entry['code'], ' with the variant "%s"' % entry['variant'] if key[1] else ' without a variant'))
+            seen_variant.setdefault(key, entry['path'])
         rep.print()
         if rep.errors or entry is None:
             failed += 1
