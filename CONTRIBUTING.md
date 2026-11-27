@@ -94,6 +94,11 @@ Your editor can check the file as you type: [`schema/antigem-language.schema.jso
 - **File name = pack id**, unique in this repository: lowercase letters, digits and hyphens.
   Use the code for the main pack (`ne.json`, `pt-br.json`) and add the variant for others
   (`hi-latn.json`, `de-formal.json`).
+- **One pack per language and variant.** A second pack of a language needs its own `variant` (`Formal`,
+  `Latin letters`…). That's also how a translation sent with the form finds its pack: same code and variant means
+  an update of that pack, anything else is a new pack.
+- **Pull requests change only pack files:** `languages/<code>/<id>.json`. Other files (notes, images, deeper
+  folders) are refused.
 - **Don't rename a published pack.** The app knows a downloaded language by its id, so a new id is a new language
   for everyone who downloaded the old one.
 
@@ -146,8 +151,9 @@ share it under GPL-3.0-or-later.** You keep the credit: your name stays in the p
   code, removes or adds GitHub authors, or drops many texts (`tools/author_update.py`,
   `.github/workflows/author-merge.yml`). Adding a GitHub username to `authors` gives that person this right.
 - **Turning a "Share a translation" issue into a pull request:** add the `create-pr` label to the issue. A workflow
-  downloads the attached file, puts it in `languages/<code>/<id>.json` (an improvement is merged into the pack it
-  improves: its texts replace the old ones, every author stays), checks it, opens a pull request that closes the
+  downloads the attached file and works out from it where it goes (its `code` is the folder; the pack with the
+  same code and variant is updated: its texts replace the old ones, every author stays; otherwise it's a new pack),
+  checks it, opens a pull request that closes the
   issue and comments the link. If the file has problems, it says what on the issue and removes the label: once the
   issue has a fixed file, add the label again.
 - **`main` is protected:** changes go through a pull request with the `check` passing and an approval. The check

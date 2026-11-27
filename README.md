@@ -145,7 +145,8 @@ You don't change `index.json` or the table in this README: they're rebuilt after
    translated, and **To translate** shows new ones.
 3. **Add yourself.** **⋮ → Name & details.** Add yourself to the people and keep everyone already there.
 4. **Send it.**
-   - **With the form:** as in [step 4A](#4-send-it). Choose **Improvements to a pack that's already here** in the form.
+   - **With the form:** as in [step 4A](#4-send-it). Keep the language code and variant as they are: that's how
+     your file finds the pack it updates.
    - **With a pull request:** replace the pack's existing file. Keep the same path and file name, because the app
      knows a downloaded language by its id. A new name would be a new language for everyone.
 
@@ -234,8 +235,9 @@ python3 tools/build_index.py           # check, then write index.json and the ta
 ```
 
 **Adding a translation sent with the form:** add the `create-pr` label to the issue. A workflow
-(`.github/workflows/share-translation.yml`) downloads the attached file, puts it in `languages/<code>/<id>.json`
-(an improvement is merged into the pack it improves), checks it, opens a pull request that closes the issue and
+(`.github/workflows/share-translation.yml`) downloads the attached file and works out from it where it goes: its
+`code` is the folder, and the pack here with the same code and variant is updated (its texts replace the old ones,
+every author stays); otherwise it's a new `languages/<code>/<id>.json`. It checks it, opens a pull request that closes the issue and
 comments the link. If the file has problems, it explains them on the issue and removes the label: add it again once
 the issue has a fixed file. Then review the pull request, approve it and merge it.
 
