@@ -1,12 +1,17 @@
 name: Check language packs
 
+# Runs on every pull request (the "check" job is required before merging into main).
+#
+# Packs are checked with main's own tools/build_index.py and en.json, never the pull request's copy,
+# so a pull request can't make its own check pass by changing the checker. Only the owner's pull requests
+# are checked with their own tools (to test changes to the tools).
+#
+# Pull requests from anyone else may only change files in languages/.
+#
+# workflow_dispatch runs the same check on a branch (the "Share a translation" workflow starts it on the
+# pull requests it opens, because pull requests opened by a workflow don't start other workflows).
 on:
   pull_request:
-    paths:
-      - 'languages/**'
-      - 'en.json'
-      - 'tools/**'
-      - '.github/workflows/check.yml'
   workflow_dispatch:
 
 permissions:
@@ -15,16 +20,51 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      TRUSTED: ${{ github.event_name == 'pull_request' && github.event.pull_request.author_association == 'OWNER' }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Get main (the trusted tools and English texts)
+        uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.base.sha || github.event.repository.default_branch }}
           fetch-depth: 0
+          persist-credentials: false
 
-      - name: index.json is made by the publish workflow
-        if: github.event_name == 'pull_request'
+      - name: Fetch the changes to check
         run: |
-          if git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -qx 'index.json'; then
-            echo "::warning file=index.json::index.json is rebuilt after the merge: you don't need to change it"
+          if [ -n "$PR_NUMBER" ]; then
+            git fetch --no-tags origin "+refs/pull/$PR_NUMBER/head:refs/remotes/pr/head"
+          else
+            git fetch --no-tags origin "$HEAD_SHA"
+          fi
+          git cat-file -e "$HEAD_SHA^{commit}"
+
+      - name: Pull requests change only languages/
+        if: github.event_name == 'pull_request' && env.TRUSTED != 'true'
+        run: |
+          outside=$(git diff --name-only --no-renames "$BASE_SHA...$HEAD_SHA" | grep -v '^languages/' || true)
+          if [ -n "$outside" ]; then
+            echo "This pull request also changes files outside languages/:"
+            echo "$outside" | sed 's/^/  /'
+            echo "$outside" | while read -r f; do
+              echo "::error file=$f::Translation pull requests may only change files in languages/ (index.json and the README table are rebuilt after the merge)"
+            done
+            echo "Please remove these changes, or open a separate pull request (or an issue) for them."
+            exit 1
+          fi
+          echo "Only languages/ changed."
+
+      - name: Use the pull request's language files with main's tools
+        run: |
+          if [ "$TRUSTED" = "true" ]; then
+            echo "The owner's pull request: checking it with its own tools"
+            git checkout --quiet --detach "$HEAD_SHA"
+          else
+            rm -rf languages
+            git checkout --quiet "$HEAD_SHA" -- languages
           fi
 
       - name: Check every pack

@@ -28,9 +28,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      # main is protected (pull requests + the "check"): this workflow pushes with a deploy key, which the
+      # ruleset lets through. The key's private half is the PUBLISH_DEPLOY_KEY secret (Settings → Secrets → Actions).
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ssh-key: ${{ secrets.PUBLISH_DEPLOY_KEY }}
 
       - name: Fetch the app's English texts
         run: |

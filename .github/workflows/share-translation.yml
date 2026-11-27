@@ -1,0 +1,108 @@
+name: Share a translation → pull request
+
+# When a maintainer adds the "create-pr" label to a "Share a translation" issue, this downloads the attached file,
+# puts it in languages/<code>/<id>.json (an improvement is merged into the pack it improves), checks it and opens a
+# pull request that closes the issue. Only people who can triage issues can add labels, so strangers can't start it.
+#
+# If something's wrong with the file, it says so on the issue and removes the label: once the issue has a fixed
+# file, add the label again.
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write        # push the translation/issue-<n> branch (main is protected)
+  pull-requests: write   # open the pull request
+  issues: write          # comment on the issue, remove the label
+  actions: write         # start the check on the new branch
+
+concurrency:
+  group: share-translation-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  make-pr:
+    if: github.event.label.name == 'create-pr' && !github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+      ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+      # the issue's text is untrusted: it only ever reaches the script through this variable
+      ISSUE_BODY: ${{ github.event.issue.body }}
+      BRANCH: translation/issue-${{ github.event.issue.number }}
+      BASE: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Turn the attached file into a pack
+        id: pack
+        run: python3 tools/issue_to_pack.py
+
+      - name: Check the pack
+        env:
+          PACK_PATH: ${{ steps.pack.outputs.path }}
+        run: |
+          set -o pipefail
+          if ! GITHUB_ACTIONS=false python3 tools/build_index.py --check "$PACK_PATH" > "$RUNNER_TEMP/check.txt" 2>&1; then
+            cat "$RUNNER_TEMP/check.txt"
+            {
+              echo "I couldn't turn this into a pull request yet: the file has problems the app or the check refuses."
+              echo
+              echo '```'
+              head -c 6000 "$RUNNER_TEMP/check.txt"
+              echo '```'
+              echo
+              echo "Fix them in the app (**⋮ → Edit texts**), save the file again and attach it to this issue (edit the issue). Most often it's a \`{placeholder}\` that was translated or renamed: keep each one exactly as in English."
+            } > "$RUNNER_TEMP/pack-comment.md"
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/check.txt"
+
+      - name: Commit it to a branch
+        id: commit
+        env:
+          PACK_PATH: ${{ steps.pack.outputs.path }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add -- "$PACK_PATH"
+          if git diff --cached --quiet; then
+            echo "The pack published now already has exactly these texts and authors: nothing to change." > "$RUNNER_TEMP/pack-comment.md"
+            exit 1
+          fi
+          git commit --quiet -F "$RUNNER_TEMP/pack-commit.txt"
+          git push --force origin "HEAD:refs/heads/$BRANCH"
+
+      - name: Open the pull request
+        env:
+          TITLE: ${{ steps.pack.outputs.title }}
+        run: |
+          url=$(gh pr list --head "$BRANCH" --state open --json url --jq '.[0].url // ""')
+          if [ -n "$url" ]; then
+            gh pr edit "$url" --title "$TITLE" --body-file "$RUNNER_TEMP/pack-pr.md"
+            verb="updated"
+          else
+            url=$(gh pr create --base "$BASE" --head "$BRANCH" --title "$TITLE" --body-file "$RUNNER_TEMP/pack-pr.md")
+            verb="made"
+          fi
+          # a pull request opened by a workflow doesn't start other workflows: start the check by hand
+          gh workflow run check.yml --ref "$BRANCH"
+          gh issue comment "$ISSUE_NUMBER" --body "Thanks! I $verb a pull request with your translation: $url
+
+          Once it's reviewed and merged, the language shows up in the app within a few minutes. This issue closes then."
+          gh issue edit "$ISSUE_NUMBER" --remove-label create-pr
+
+      - name: Tell the issue what went wrong
+        if: failure()
+        run: |
+          if [ ! -s "$RUNNER_TEMP/pack-comment.md" ]; then
+            echo "Something went wrong while making the pull request. A maintainer will look at it: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$RUNNER_TEMP/pack-comment.md"
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body-file "$RUNNER_TEMP/pack-comment.md"
+          gh issue edit "$ISSUE_NUMBER" --remove-label create-pr || true

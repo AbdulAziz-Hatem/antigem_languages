@@ -36,7 +36,8 @@ pack is usually better than starting a second one. Start a new pack when you wan
 2. Change the header (see [The file](#the-file)), translate the texts and delete the `notes` block.
    You can leave out keys you don't translate.
 3. Check it: `python3 tools/build_index.py --check languages/ne/ne.json`
-4. Open a pull request. The same check runs on it.
+4. Open a pull request. The same check runs on it. A translation pull request may only change files in
+   `languages/` (`index.json` and the README table are rebuilt after the merge); ask in an issue for anything else.
 
 ---
 
@@ -123,6 +124,17 @@ Add yourself to `authors` and keep everyone who's already there.
 The app is licensed under GPL-3.0-or-later, and so are the translations (see [LICENSE](LICENSE)): they translate
 the app's own texts. **By sending a translation (a pull request or the "Share a translation" form), you agree to
 share it under GPL-3.0-or-later.** You keep the credit: your name stays in the pack's `authors`.
+
+## For maintainers
+
+- **Turning a "Share a translation" issue into a pull request:** add the `create-pr` label to the issue. A workflow
+  downloads the attached file, puts it in `languages/<code>/<id>.json` (an improvement is merged into the pack it
+  improves: its texts replace the old ones, every author stays), checks it, opens a pull request that closes the
+  issue and comments the link. If the file has problems, it says what on the issue and removes the label: once the
+  issue has a fixed file, add the label again.
+- **`main` is protected:** changes go through a pull request with the `check` passing and an approval. The check
+  uses `main`'s own `tools/` and `en.json`, never the pull request's copy. The publish workflow pushes `index.json`
+  with a deploy key (the `PUBLISH_DEPLOY_KEY` secret) that the rule lets through.
 
 ## What happens after a merge
 
