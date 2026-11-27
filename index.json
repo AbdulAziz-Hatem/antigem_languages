@@ -77,13 +77,13 @@
       "based_on": "",
       "app_version": "2.0.5-beta.5",
       "translated": 4834,
-      "outdated": 0,
+      "outdated": 1,
       "total": 7661,
       "path": "languages/en/en-pirate-test.json",
-      "commit": "971012d8fd7652fd9b7b1496b82cca26d8590ddf",
+      "commit": "b35bc4eb6ed2e856024fb33e9dffe6b8b3977f5e",
       "updated": "2026-11-27",
-      "size": 778371,
-      "sha256": "2d09f8cc2520640e6c687faad1d7264a6d4fb7dcbb68fbeaf5e50dee5bb9d50a"
+      "size": 778380,
+      "sha256": "4eb79c6259154bba2ebd93924aa64795e8f0f44bd9f23547d8b73c241fc34f35"
     },
     {
       "id": "ru",
