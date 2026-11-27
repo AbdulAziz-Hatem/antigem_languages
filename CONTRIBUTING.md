@@ -19,7 +19,9 @@ pack is usually better than starting a second one. Start a new pack when you wan
    Edits save as you type, and the app changes as you go.
 3. **⋮ → Name & details:** add yourself under **Made by** (name and GitHub username), plus a short description.
 4. **⋮ → Send to the community:** save the file, then open the form on GitHub and attach the file
-   (if GitHub refuses a `.json` file, zip it first). We'll turn it into a pull request and credit you.
+   (if GitHub refuses a `.json` file, zip it first). A bot replies within a minute with what happens to your file:
+   which language it is, every pack of that language that's already here, and whether yours updates one of them
+   or becomes a new pack. Then we turn it into a pull request and credit you.
 
 ## Way 2: with an AI agent
 

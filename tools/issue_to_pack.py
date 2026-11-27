@@ -235,6 +235,88 @@ def place(o, packs):
     return 'languages/%s/%s.json' % (o['code'], pack_id), pack_id, o, None
 
 
+# ---------------------------------------------------------------- what we tell the person
+
+INFO_MARK = '<!-- share-translation:about-this-file -->'
+
+
+def published_stats():
+    """id → its entry in index.json (texts translated, authors…), for the packs that are published."""
+    try:
+        with open(os.path.join(ROOT, 'index.json'), encoding='utf-8') as f:
+            return {p['id']: p for p in json.load(f).get('languages', [])}
+    except (OSError, ValueError, KeyError, TypeError):
+        return {}
+
+
+def plain(text, limit=80):
+    """Text from a pack, safe in a comment: one line, short, no markdown, no @mentions."""
+    text = ' '.join(str(text or '').split())[:limit]
+    text = re.sub(r'([\\`*_\[\]<>|~#])', r'\\\1', text)
+    return text.replace('@', '@\u200b')
+
+
+def describe(name, native, variant):
+    text = '**%s**' % plain(name)
+    if native and native != name:
+        text += ' · %s' % plain(native)
+    return text + (' · %s' % plain(variant) if variant else '')
+
+
+def people_of(pack):
+    # profile links, not @mentions: listing a pack mustn't notify its authors
+    names = ['[%s](https://github.com/%s)' % (plain(a['name'], 40), a['github']) if a.get('github') else plain(a['name'], 40)
+             for a in pack.get('authors') or [] if isinstance(a, dict) and a.get('name')]
+    return ', '.join(names[:4]) + (' +%d' % (len(names) - 4) if len(names) > 4 else '') or '—'
+
+
+def about_file(o, packs, target):
+    """Markdown: what this file is, which packs of its language are already here, and what will happen to it."""
+    code = o['code']
+    stats = published_stats()
+    same = sorted(((i, path, p) for i, (path, p) in packs.items() if p.get('code') == code),
+                  key=lambda x: (variant_key(x[2].get('variant')), x[0]))
+    lines = [INFO_MARK, '### What happens with this file', '',
+             'Your file is %s (language code `%s`%s).' % (
+                 describe(o.get('name') or code, o.get('native_name'), ''), code,
+                 ', variant *%s*' % plain(o['variant']) if (o.get('variant') or '').strip() else ', no variant'), '']
+    if target is not None:
+        path, p = packs[target]
+        lines += ['🔄 **It updates a pack that\'s already here:** `%s` (%s).' % (
+                      path, describe(p.get('name') or code, p.get('native_name'), p.get('variant'))),
+                  'Your texts replace the ones there. Texts your file doesn\'t have stay as they are, and everyone '
+                  'in its authors stays.', '']
+    else:
+        try:
+            new_path = 'languages/%s/%s.json' % (code, new_pack_id(o, packs))
+        except Refused:
+            new_path = 'languages/%s/…' % code
+        lines += ['🆕 **It becomes a new pack:** `%s`.' % new_path, '']
+    if same:
+        lines += ['**%s of this language here:**' % ('The only pack' if len(same) == 1 else 'All %d packs' % len(same)),
+                  '', '| Pack | Variant | Translated | By |', '|---|---|---|---|']
+        for i, path, p in same:
+            st = stats.get(i)
+            done = '%d%%' % (100 * st['translated'] // max(1, st['total'])) if st else 'not published'
+            mark = ' ← yours updates this' if i == target else ''
+            lines.append('| [`%s`](https://github.com/%s/blob/main/%s)%s | %s | %s | %s |' % (
+                os.path.basename(path), REPOSITORY, path, mark, plain(p.get('variant')) or '—', done, people_of(p)))
+        lines.append('')
+        if target is not None:
+            lines.append('*Not what you meant?* To add **another style or script** instead of updating this pack, '
+                         'give your language a variant that isn\'t in the list (in the app: **⋮ → Name & details**, '
+                         'e.g. *Formal*), save the file again and attach it here by editing this issue.')
+        else:
+            lines.append('*Not what you meant?* To **update** one of these packs instead, give your language exactly '
+                         'the same variant as that pack (in the app: **⋮ → Name & details**; no variant for the '
+                         'one marked —), save the file again and attach it here by editing this issue.')
+        lines.append('')
+    else:
+        lines += ['There\'s no pack of this language here yet: yours will be the first. '
+                  'See [all languages](https://github.com/%s#languages).' % REPOSITORY, '']
+    return '\n'.join(lines)
+
+
 # ---------------------------------------------------------------- main
 
 def write(name, text):
@@ -270,24 +352,30 @@ def run(body, number, author, mode):
     packs = existing_packs()
     people = form_authors(section(sections, 'Who made it'))
 
+    action = 'pr'
     if mode == 'auto':
-        # published right away only when the person who opened the issue is an author of the pack it updates
+        # everyone is told what the file does and which packs of its language are here (pack-info.md), and the file
+        # is checked; it's published right away only when the person who opened the issue is an author of the pack
+        # it updates and keeps its code and people
         target = find_target(o, packs)
+        info = about_file(o, packs, target)
+        path, pack_id, pack, improves = place(o, packs)
+        pack['authors'] = add_authors(list(pack.get('authors') or []), people)
         if target is None or not author_update.is_author(packs[target][1], author):
-            print('@%s isn\'t an author of a pack this updates: a maintainer adds the create-pr label' % author)
-            output(action='none')
-            return
-        path, old = packs[target]
-        pack = merge_into(old, o)
-        pack['authors'] = add_authors(pack['authors'], people)
-        reasons = author_update.review_reasons(old, pack, author, whole_file=False)
-        if reasons:
-            write('pack-comment.md', 'Thanks! You\'re one of the authors of `%s`, but this update needs a '
-                                     'maintainer\'s review first because:\n\n%s\nA maintainer will look at it soon.\n'
-                  % (path, ''.join('- %s\n' % r for r in reasons)))
-            output(action='review')
-            return
-        pack_id, improves = target, target
+            action = 'inform'
+            write('pack-info.md', info + '\nA maintainer will look at it and make a pull request from it. If you '
+                                         'change the file (edit this issue), this note follows.\n')
+        else:
+            reasons = author_update.review_reasons(packs[target][1], pack, author, whole_file=False)
+            if reasons:
+                action = 'review'
+                write('pack-info.md', info + '\nYou\'re one of this pack\'s authors, but this update needs a '
+                                             'maintainer\'s review first because:\n\n%s\nA maintainer will look at '
+                                             'it soon.\n' % ''.join('- %s\n' % r for r in reasons))
+            else:
+                action = 'publish'
+                write('pack-info.md', info + '\n✅ You\'re one of this pack\'s authors, so it\'s published right '
+                                             'away.\n')
     else:
         path, pack_id, pack, improves = place(o, packs)
         authors = add_authors(list(pack.get('authors') or []), people)
@@ -309,7 +397,7 @@ def run(body, number, author, mode):
     if mode == 'auto':
         write('pack-commit.txt', '%s\n\nPublished by its author @%s from the "Share a translation" issue #%s.\n'
               % (title, author, number))
-        output(action='publish', path=path, id=pack_id, title=title)
+        output(action=action, path=path, id=pack_id, title=title)
         return
 
     credits = '\n'.join('- %s%s%s' % (a['name'], ' (@%s)' % a['github'] if a.get('github') else '',
