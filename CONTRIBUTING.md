@@ -157,7 +157,8 @@ share it under GPL-3.0-or-later.** You keep the credit: your name stays in the p
   same code and variant is updated: its texts replace the old ones, every author stays; otherwise it's a new pack),
   checks it, opens a pull request that closes the
   issue and comments the link. If the file has problems, it says what on the issue and removes the label: once the
-  issue has a fixed file, add the label again.
+  issue has a fixed file, add the label again. GitHub holds the check on a pull request opened by the bot: click
+  **Approve workflows to run** in its merge box, then review, approve and merge it.
 - **`main` is protected:** changes go through a pull request with the `check` passing and an approval. The check
   uses `main`'s own `tools/` and `en.json`, never the pull request's copy. The publish workflow pushes `index.json`
   with a deploy key (the `PUBLISH_DEPLOY_KEY` secret) that the rule lets through.

@@ -23,7 +23,6 @@ permissions:
   contents: write        # push the translation/issue-<n> branch
   pull-requests: write   # open the pull request
   issues: write          # comment on the issue, remove the label, close it
-  actions: write         # start the check on the new branch
 
 concurrency:
   group: share-translation-${{ github.event.issue.number }}
@@ -141,8 +140,8 @@ jobs:
             url=$(gh pr create --base "$BASE" --head "$BRANCH" --title "$TITLE" --body-file "$RUNNER_TEMP/pack-pr.md")
             verb="made"
           fi
-          # a pull request opened by a workflow doesn't start other workflows: start the check by hand
-          gh workflow run check.yml --ref "$BRANCH"
+          # GitHub holds the check on a pull request opened by a workflow until a maintainer clicks
+          # "Approve workflows to run" on it (the pull request's description says so)
           gh issue comment "$ISSUE_NUMBER" --body "Thanks! I $verb a pull request with your translation ($DETECTED): $url
 
           Once it's reviewed and merged, the language shows up in the app within a few minutes. This issue closes then."

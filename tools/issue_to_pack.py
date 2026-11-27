@@ -419,8 +419,8 @@ def run(body, number, author, mode):
                                       'author stay' if improves else 'a new pack'), '',
         '**Made by**', credits or '- (nobody listed)', '',
     ] + (['**Notes from the issue**', '', '> ' + notes.replace('\n', '\n> '), ''] if notes else []) + [
-        'The check on this pull request looks at the file. Before merging, have someone who speaks the language '
-        'read it.', '',
+        '**Maintainer:** GitHub holds the check on pull requests opened by this bot: click **Approve workflows to '
+        'run** (in the merge box) to start it. Before merging, have someone who speaks the language read it.', '',
         'Closes #%s' % number, '',
     ]))
     output(action='pr', path=path, id=pack_id, title=title,
