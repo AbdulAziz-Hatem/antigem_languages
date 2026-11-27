@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """
-Decides whether an update to a pack can be published without a maintainer: its sender must be one of the pack's
-authors (their GitHub username in "authors" of the pack on main), and the update must keep the pack's identity and
-its people.
+Decides whether an update to a pack can be published without a maintainer.
+
+Who: the pack's owners in .github/pack-owners.json (GitHub usernames). A pack's creators (its authors when it was
+first published) are put there automatically; anyone else only by a maintainer editing that file. Being listed in
+a pack's "authors" is credit, not a right to publish.
+
+What: the update must keep the pack's language code, remove nobody from "authors" and (in a pull request, which
+replaces the whole file) not drop more than a fifth of the pack's translated texts.
 
     python3 tools/author_update.py <pack on main> <updated pack> <github username>
 
-Prints the decision, writes author=true|false and ok=true|false to $GITHUB_OUTPUT, and the reasons a maintainer has
-to look at it to $RUNNER_TEMP/author-reasons.md. Exit code 0 either way (2 when a file can't be read).
-The files are only read as JSON data. Needs Python 3.8+, nothing else.
+Prints the decision, writes author=true|false (an owner?) and ok=true|false (publish it?) to $GITHUB_OUTPUT, and the
+reasons a maintainer has to look at it to $RUNNER_TEMP/author-reasons.md. Exit code 0 either way (2 when a file
+can't be read). The files are only read as JSON data. Needs Python 3.8+, nothing else.
 """
 import json
 import os
@@ -16,20 +21,25 @@ import sys
 import tempfile
 from collections import OrderedDict
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OWNERS = os.path.join(ROOT, '.github', 'pack-owners.json')
+
 # An update that loses more than this share of the pack's translated texts needs a maintainer.
 MAX_LOSS = 0.2
 
 
-def github_names(pack):
-    out = set()
-    for a in pack.get('authors') or []:
-        if isinstance(a, dict) and isinstance(a.get('github'), str) and a['github'].strip():
-            out.add(a['github'].strip().lstrip('@').lower())
-    return out
+def owners_of(pack_id):
+    """The GitHub usernames (lowercase) who can publish updates to this pack, from main's .github/pack-owners.json."""
+    try:
+        with open(OWNERS, encoding='utf-8') as f:
+            names = json.load(f).get('owners', {}).get(pack_id) or []
+    except (OSError, ValueError, AttributeError):
+        return set()
+    return {str(n).strip().lstrip('@').lower() for n in names if str(n).strip()}
 
 
-def is_author(pack, login):
-    return bool(login) and login.strip().lstrip('@').lower() in github_names(pack)
+def is_owner(pack_id, login):
+    return bool(login) and login.strip().lstrip('@').lower() in owners_of(pack_id)
 
 
 def same_author(a, b):
@@ -45,12 +55,12 @@ def translated(pack):
     return sum(1 for v in strings.values() if (v if isinstance(v, str) else isinstance(v, dict) and v.get('other')))
 
 
-def review_reasons(old, new, login, whole_file=True):
-    """Why a maintainer has to review this update (empty: the author can publish it).
+def review_reasons(pack_id, old, new, login, whole_file=True):
+    """Why a maintainer has to review this update (empty: the owner can publish it).
     whole_file: the update replaces the pack (a pull request), so texts can disappear; the form merges instead."""
     reasons = []
-    if not is_author(old, login):
-        reasons.append('@%s isn\'t one of the GitHub usernames in this pack\'s `authors`' % login)
+    if not is_owner(pack_id, login):
+        reasons.append('@%s isn\'t one of this pack\'s owners (`.github/pack-owners.json`)' % login)
     if (old.get('code') or '') != (new.get('code') or ''):
         reasons.append('it changes the language code (`%s` → `%s`)' % (old.get('code'), new.get('code')))
     old_authors = [a for a in old.get('authors') or [] if isinstance(a, dict)]
@@ -58,10 +68,6 @@ def review_reasons(old, new, login, whole_file=True):
     gone = [a.get('name') or a.get('github') for a in old_authors if not any(same_author(a, b) for b in new_authors)]
     if gone:
         reasons.append('it removes %s from `authors`' % ', '.join('**%s**' % g for g in gone))
-    added = sorted(github_names(new) - github_names(old))
-    if added:
-        reasons.append('it adds %s to `authors`: people listed there can publish updates to this pack, so a '
-                       'maintainer approves new ones once' % ', '.join('@' + g for g in added))
     if whole_file:
         before, after = translated(old), translated(new)
         if before and after < before * (1 - MAX_LOSS):
@@ -85,22 +91,23 @@ def main(argv):
     except (OSError, ValueError) as e:
         print('can\'t read the packs: %s' % e, file=sys.stderr)
         return 2
+    pack_id = os.path.splitext(os.path.basename(argv[0]))[0]
     login = argv[2]
-    author = is_author(old, login)
-    reasons = review_reasons(old, new, login) if author else []
+    owner = is_owner(pack_id, login)
+    reasons = review_reasons(pack_id, old, new, login) if owner else []
     out = os.environ.get('GITHUB_OUTPUT')
     if out:
         with open(out, 'a', encoding='utf-8') as f:
-            f.write('author=%s\nok=%s\n' % (str(author).lower(), str(author and not reasons).lower()))
+            f.write('author=%s\nok=%s\n' % (str(owner).lower(), str(owner and not reasons).lower()))
     with open(os.path.join(os.environ.get('RUNNER_TEMP') or tempfile.gettempdir(), 'author-reasons.md'), 'w',
               encoding='utf-8', newline='\n') as f:
         f.write(''.join('- %s\n' % r for r in reasons))
-    if not author:
-        print('@%s is not an author of this pack: a maintainer reviews it' % login)
+    if not owner:
+        print('@%s is not an owner of %s: a maintainer reviews it' % (login, pack_id))
     elif reasons:
-        print('@%s is an author, but a maintainer has to look at it:\n%s' % (login, '\n'.join('  ' + r for r in reasons)))
+        print('@%s owns %s, but a maintainer has to look at it:\n%s' % (login, pack_id, '\n'.join('  ' + r for r in reasons)))
     else:
-        print('@%s is an author and the update keeps the pack\'s code and people: it can be published' % login)
+        print('@%s owns %s and the update keeps its code and people: it can be published' % (login, pack_id))
     return 0
 
 

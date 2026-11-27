@@ -34,6 +34,7 @@ GITHUB = re.compile(r'^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$')
 KNOWN_FIELDS = {'$schema', 'format','format_version', 'id', 'code', 'name', 'native_name', 'variant', 'rtl', 'description',
                 'authors', 'based_on', 'app_version', 'strings', 'sources', 'author', 'about'}
 AUTHOR_FIELDS = {'name', 'github', 'url', 'role'}
+OWNERS = os.path.join(ROOT, '.github', 'pack-owners.json')
 README_START = '<!-- languages:start -->'
 README_END = '<!-- languages:end -->'
 
@@ -349,6 +350,25 @@ def readme_table(packs):
     return '\n'.join(rows)
 
 
+def record_creators(packs):
+    """Adds each newly published pack's authors (its creators) to .github/pack-owners.json, the list of who can
+    publish updates without a review. Packs already there are never changed: that's done by hand."""
+    try:
+        with open(OWNERS, encoding='utf-8') as f:
+            doc = json.load(f, object_pairs_hook=OrderedDict)
+    except (OSError, ValueError):
+        return False
+    owners = doc.setdefault('owners', OrderedDict())
+    new = [p for p in packs if p['id'] not in owners]
+    if not new:
+        return False
+    for p in new:
+        owners[p['id']] = [a['github'] for a in p['authors'] if a.get('github')]
+        print('pack-owners.json: %s is new, its creators: %s' % (p['id'], ', '.join(owners[p['id']]) or 'nobody with GitHub'))
+    doc['owners'] = OrderedDict(sorted(owners.items()))
+    return write_if_changed(OWNERS, json.dumps(doc, ensure_ascii=False, indent=2) + '\n')
+
+
 def write_if_changed(path, text):
     old = open(path, encoding='utf-8').read() if os.path.exists(path) else None
     if old != text:
@@ -413,6 +433,7 @@ def main(argv):
         ('languages', packs),
     ])
     changed = write_if_changed(INDEX, json.dumps(index, ensure_ascii=False, indent=2) + '\n')
+    changed = record_creators(packs) or changed
     if os.path.exists(README):
         text = open(README, encoding='utf-8').read()
         a, b = text.find(README_START), text.find(README_END)
