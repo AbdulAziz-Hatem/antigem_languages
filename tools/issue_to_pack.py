@@ -82,6 +82,8 @@ def form_authors(text):
         parts = [p.strip() for p in line.strip().lstrip('-*').split(',') if p.strip()]
         if not parts:
             continue
+        if len(parts[0]) > 60 or len(parts[0].split()) > 5:
+            continue  # a sentence about the translation, not a name: the file's own authors are used
         a = OrderedDict([('name', parts[0].lstrip('@')[:100])])
         rest = []
         for p in parts:
@@ -154,6 +156,10 @@ def parse_pack(data):
         raise Refused('The file has no translated texts.')
     o.pop('notes', None)
     o.pop('$schema', None)
+    # some tools write authors as plain names: ["Sita"] → [{"name": "Sita"}]
+    if isinstance(o.get('authors'), list):
+        o['authors'] = [OrderedDict([('name', a.strip()[:100])]) if isinstance(a, str) else a
+                        for a in o['authors'] if not (isinstance(a, str) and not a.strip())]
     return o
 
 
@@ -379,8 +385,10 @@ def run(body, number, author, mode):
     else:
         path, pack_id, pack, improves = place(o, packs)
         authors = add_authors(list(pack.get('authors') or []), people)
-        if not authors and author:
-            authors = [OrderedDict([('name', author), ('github', author)])]
+        if author and not improves and not any(isinstance(a, dict) and a.get('github') for a in authors):
+            # a new pack where nobody has a GitHub username: credit the person who sent it (the maintainer sees
+            # this in the pull request before merging)
+            authors.append(OrderedDict([('name', author), ('github', author)]))
         pack['authors'] = authors
 
     full = os.path.join(ROOT, *path.split('/'))
