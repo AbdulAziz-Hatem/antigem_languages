@@ -361,26 +361,26 @@ def run(body, number, author, mode):
     action = 'pr'
     if mode == 'auto':
         # everyone is told what the file does and which packs of its language are here (pack-info.md), and the file
-        # is checked; it's published right away only when the person who opened the issue is an author of the pack
-        # it updates and keeps its code and people
+        # is checked; it's published right away only when the person who opened the issue is an owner of the pack
+        # it updates (.github/pack-owners.json) and keeps its code and people
         target = find_target(o, packs)
         info = about_file(o, packs, target)
         path, pack_id, pack, improves = place(o, packs)
         pack['authors'] = add_authors(list(pack.get('authors') or []), people)
-        if target is None or not author_update.is_author(packs[target][1], author):
+        if target is None or not author_update.is_owner(target, author):
             action = 'inform'
             write('pack-info.md', info + '\nA maintainer will look at it and make a pull request from it. If you '
                                          'change the file (edit this issue), this note follows.\n')
         else:
-            reasons = author_update.review_reasons(packs[target][1], pack, author, whole_file=False)
+            reasons = author_update.review_reasons(target, packs[target][1], pack, author, whole_file=False)
             if reasons:
                 action = 'review'
-                write('pack-info.md', info + '\nYou\'re one of this pack\'s authors, but this update needs a '
+                write('pack-info.md', info + '\nYou\'re one of this pack\'s owners, but this update needs a '
                                              'maintainer\'s review first because:\n\n%s\nA maintainer will look at '
                                              'it soon.\n' % ''.join('- %s\n' % r for r in reasons))
             else:
                 action = 'publish'
-                write('pack-info.md', info + '\n✅ You\'re one of this pack\'s authors, so it\'s published right '
+                write('pack-info.md', info + '\n✅ You\'re one of this pack\'s owners, so it\'s published right '
                                              'away.\n')
     else:
         path, pack_id, pack, improves = place(o, packs)

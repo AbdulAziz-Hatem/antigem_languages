@@ -243,9 +243,10 @@ comments the link. If the file has problems, it explains them on the issue and r
 the issue has a fixed file. On the pull request, click **Approve workflows to run** (GitHub holds the check on pull
 requests opened by the bot), then review it, approve it and merge it.
 
-**Authors update their own packs:** when someone whose GitHub username is in a pack's `authors` sends an update to
-that pack (form or pull request), it's published without you, unless it changes the code, removes or adds GitHub
-authors, or drops many texts. See [CONTRIBUTING.md](CONTRIBUTING.md#updating-your-own-pack).
+**Owners update their own packs:** a pack's owners (in `.github/pack-owners.json`: its creators, recorded when it's
+first published, plus anyone you add there) can publish updates to it without you, unless an update changes the
+code, removes authors, or drops many texts. Others who help are credited in `authors` but reviewed by you. See
+[CONTRIBUTING.md](CONTRIBUTING.md#updating-your-own-pack).
 
 - `.github/workflows/check.yml` checks every pull request with `main`'s own tools. Pull requests from anyone but
   the owner may only change `languages/`.

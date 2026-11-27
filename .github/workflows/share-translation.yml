@@ -4,9 +4,10 @@ name: Share a translation → pull request
 #
 # - An issue is opened or edited: the bot says what happens with the file in one comment (updated on every edit):
 #   which language it is, every pack of that language that's already here, and whether it updates one of them or
-#   becomes a new pack. If the person who opened it is one of the authors (GitHub username in "authors") of the
-#   pack it updates, and the update keeps the pack's code and people (tools/author_update.py), the file is checked
-#   and published to main right away, and the issue is closed. Anyone else's issue waits for a maintainer.
+#   becomes a new pack. If the person who opened it is one of the owners of the pack it updates
+#   (.github/pack-owners.json: its creators, plus anyone a maintainer added), and the update keeps the pack's code
+#   and people (tools/author_update.py), the file is checked and published to main right away, and the issue is
+#   closed. Anyone else's issue waits for a maintainer.
 #
 # - A maintainer adds the "create-pr" label: the file goes where it says (its "code" is the folder; the pack with the
 #   same code and variant is updated, else it's a new pack), is checked, and a pull request that closes the issue

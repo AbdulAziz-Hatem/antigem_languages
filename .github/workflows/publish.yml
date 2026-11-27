@@ -49,7 +49,7 @@ jobs:
 
       - name: Commit what changed
         run: |
-          git add en.json index.json README.md
+          git add en.json index.json README.md .github/pack-owners.json
           if git diff --cached --quiet; then
             echo "Nothing changed"
             exit 0

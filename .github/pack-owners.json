@@ -1,0 +1,23 @@
+{
+  "about": "Who can publish updates to a pack without a maintainer's review (GitHub usernames). When a pack is first published, its authors at that moment (its creators) are added here automatically; after that this file only changes by hand. Later contributors are credited in the pack's \"authors\" but get no rights from it. To give someone rights to a pack, or take them away, edit this file.",
+  "owners": {
+    "ar": [
+      "AbdulAziz-Hatem"
+    ],
+    "en-pirate-test": [
+      "Santoshkurmi"
+    ],
+    "ru": [
+      "Selyrith"
+    ],
+    "turkish": [
+      "muazzezwq"
+    ],
+    "vi": [
+      "anhthao121"
+    ],
+    "zh-hans": [
+      "Zmin2003"
+    ]
+  }
+}

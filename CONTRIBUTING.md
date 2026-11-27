@@ -106,17 +106,21 @@ Your editor can check the file as you type: [`schema/antigem-language.schema.jso
 
 ### Updating your own pack
 
-If your GitHub username is in a pack's `authors`, your updates to that pack are published **without waiting for a
-maintainer**, whichever way you send them:
+If you **created** a pack (your GitHub username was in its `authors` when it was first published), you're one of
+its **owners**, and your updates to it are published **without waiting for a maintainer**, whichever way you send
+them. The owners of each pack are listed in [`.github/pack-owners.json`](.github/pack-owners.json); a maintainer can
+add more people there.
 
 - **With the form:** send it with *Share a translation* as usual. It's checked and published within minutes, and
   the issue is closed with a link.
 - **With a pull request:** change only your pack's file. When the check passes, it's approved and merged
   automatically.
 
-A maintainer still looks first when the update changes the language code, removes someone from `authors`, adds a
-new GitHub username to `authors` (people listed there can publish, so new ones are approved once), or (in a pull
-request) drops more than a fifth of the pack's texts. You'll get a comment saying why.
+A maintainer still looks first when the update changes the language code, removes someone from `authors`, or (in a
+pull request) drops more than a fifth of the pack's texts. You'll get a comment saying why.
+
+Helping with a pack you didn't create puts you in its `authors`, so the app credits you, but it doesn't make you an
+owner: your updates are reviewed by a maintainer.
 
 ### Improving an existing pack
 
@@ -148,10 +152,11 @@ share it under GPL-3.0-or-later.** You keep the credit: your name stays in the p
 
 ## For maintainers
 
-- **Authors publish their own updates:** a pull request or a *Share a translation* issue from someone whose GitHub
-  username is in the pack's `authors` (on `main`) is checked and published without you, unless it changes the
-  code, removes or adds GitHub authors, or drops many texts (`tools/author_update.py`,
-  `.github/workflows/author-merge.yml`). Adding a GitHub username to `authors` gives that person this right.
+- **Owners publish their own updates:** a pull request or a *Share a translation* issue from one of the pack's
+  owners in `.github/pack-owners.json` is checked and published without you, unless it changes the code, removes
+  authors, or drops many texts (`tools/author_update.py`, `.github/workflows/author-merge.yml`). When a pack is first
+  published, its authors at that moment become its owners automatically (so check the `authors` of new packs);
+  after that the file only changes by hand: edit it to give someone rights to a pack or take them away.
 - **Turning a "Share a translation" issue into a pull request:** add the `create-pr` label to the issue. A workflow
   downloads the attached file and works out from it where it goes (its `code` is the folder; the pack with the
   same code and variant is updated: its texts replace the old ones, every author stays; otherwise it's a new pack),

@@ -1,10 +1,10 @@
 name: Authors update their own packs
 
 # When the check passes on a pull request that changes one existing pack, and the pull request's author is one of
-# that pack's authors (their GitHub username in "authors" of the pack on main), this approves and merges it, so
-# authors can keep their language up to date without waiting for a maintainer. tools/author_update.py has the rules:
-# the update keeps the pack's language code, removes nobody from "authors", adds no new GitHub usernames there
-# (people listed can publish, so a maintainer approves new ones once) and doesn't drop more than 20% of the texts.
+# that pack's owners (.github/pack-owners.json on main: its creators, plus anyone a maintainer added), this approves
+# and merges it, so owners can keep their language up to date without waiting for a maintainer. Being in a pack's
+# "authors" is credit only. tools/author_update.py has the rules: the update keeps the pack's language code, removes
+# nobody from "authors" and doesn't drop more than 20% of the texts.
 # Anything else waits for a maintainer as usual.
 #
 # It runs after "Check language packs" (workflow_run), in this repository with main's own files: it never runs code
@@ -61,7 +61,7 @@ jobs:
           git show "$HEAD_SHA:$file" > "$RUNNER_TEMP/updated.json"
           { echo "number=$number"; echo "login=$login"; echo "file=$file"; } >> "$GITHUB_OUTPUT"
 
-      - name: Is it the pack's author, keeping the pack's code and people?
+      - name: Is it one of the pack's owners, keeping the pack's code and people?
         id: author
         if: steps.pr.outputs.number
         env:
@@ -76,18 +76,18 @@ jobs:
           LOGIN: ${{ steps.pr.outputs.login }}
           PACK: ${{ steps.pr.outputs.file }}
         run: |
-          gh pr review "$NUMBER" --approve --body "@$LOGIN is one of the authors of \`$PACK\`, and the check passed: merging it automatically."
+          gh pr review "$NUMBER" --approve --body "@$LOGIN is one of the owners of \`$PACK\`, and the check passed: merging it automatically."
           gh pr merge "$NUMBER" --merge --match-head-commit "$HEAD_SHA"
           gh workflow run publish.yml --ref "$BASE"
           gh pr comment "$NUMBER" --body "Merged ✅ Thanks, @$LOGIN! The app offers the update within a few minutes."
 
-      - name: Tell the author why a maintainer has to look at it
+      - name: Tell the owner why a maintainer has to look at it
         if: steps.author.outputs.author == 'true' && steps.author.outputs.ok != 'true'
         env:
           NUMBER: ${{ steps.pr.outputs.number }}
         run: |
           {
-            echo "Thanks! You're one of this pack's authors, but this pull request needs a maintainer's review because:"
+            echo "Thanks! You're one of this pack's owners, but this pull request needs a maintainer's review because:"
             echo
             cat "$RUNNER_TEMP/author-reasons.md"
             echo
