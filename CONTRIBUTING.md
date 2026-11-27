@@ -127,6 +127,16 @@ owner: your updates are reviewed by a maintainer.
 Edit its file in a pull request (or duplicate it in the app and send the result: we merge it into the original).
 Add yourself to `authors` and keep everyone who's already there.
 
+**Working on an older copy is safe.** The repository keeps every published version of a pack, so we find the one
+your copy was made from and take **only the texts you changed** since then:
+
+- texts someone else improved after your copy keep their newer version;
+- a text translated from older English never replaces one translated from today's English;
+- a text both you and someone else changed since your copy is shown to a maintainer, who picks one.
+
+The bot's reply on a *Share a translation* issue says how many texts are taken and how many stay. Still, for the
+least work, download the language again in an up-to-date app before you start.
+
 ---
 
 ## Rules for the texts
