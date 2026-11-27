@@ -248,6 +248,11 @@ first published, plus anyone you add there) can publish updates to it without yo
 code, removes authors, or drops many texts. Others who help are credited in `authors` but reviewed by you. See
 [CONTRIBUTING.md](CONTRIBUTING.md#updating-your-own-pack).
 
+**Updates made on an old copy** can't undo newer texts: `tools/pack_history.py` finds, in the pack's history, the
+version an update was made from and takes only the texts its sender changed since then. Texts changed both by the
+sender and in the pack since then are listed for you; an owner's update with such texts, or a pull request that
+brings back older texts, waits for your review instead of being published automatically.
+
 - `.github/workflows/check.yml` checks every pull request with `main`'s own tools. Pull requests from anyone but
   the owner may only change `languages/`.
 - `.github/workflows/publish.yml` runs on every push to `main`, every day and by hand. It fetches the app's

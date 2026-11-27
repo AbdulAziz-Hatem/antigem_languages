@@ -70,3 +70,16 @@ jobs:
 
       - name: Check every pack
         run: python3 tools/build_index.py --check
+
+      # a warning (not an error) when an updated pack would bring back texts older than the published ones, e.g. a
+      # whole file copied from an old export: tools/pack_history.py compares what main would get with the history
+      - name: Compare updated packs with their history
+        if: github.event_name == 'pull_request'
+        run: |
+          [ -f tools/pack_history.py ] || exit 0
+          git fetch --no-tags --quiet origin "refs/pull/$PR_NUMBER/merge" || exit 0
+          merge=$(git rev-parse FETCH_HEAD)
+          git diff --name-only --no-renames --diff-filter=M "$BASE_SHA" "$merge" | grep -E '^languages/[A-Za-z0-9-]+/[a-z0-9-]+\.json$' | while read -r f; do
+            git show "$merge:$f" > "$RUNNER_TEMP/merged.json"
+            python3 tools/pack_history.py "$f" "$RUNNER_TEMP/merged.json" --ref "$BASE_SHA"
+          done

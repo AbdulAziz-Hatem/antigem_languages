@@ -4,7 +4,8 @@ name: Authors update their own packs
 # that pack's owners (.github/pack-owners.json on main: its creators, plus anyone a maintainer added), this approves
 # and merges it, so owners can keep their language up to date without waiting for a maintainer. Being in a pack's
 # "authors" is credit only. tools/author_update.py has the rules: the update keeps the pack's language code, removes
-# nobody from "authors" and doesn't drop more than 20% of the texts.
+# nobody from "authors", doesn't drop more than 20% of the texts and doesn't bring back texts older than the published
+# ones (tools/pack_history.py: an update made on an old copy of the pack).
 # Anything else waits for a maintainer as usual.
 #
 # It runs after "Check language packs" (workflow_run), in this repository with main's own files: it never runs code
@@ -36,6 +37,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0          # the pack's history: tools/pack_history.py compares the update with it
           persist-credentials: false
 
       - name: Find the pull request and what it changes
@@ -55,10 +57,13 @@ jobs:
             echo "#$number doesn't just update a pack that's on $BASE ($status $file): a maintainer reviews it"; exit 0
           fi
 
-          # the pull request's version of the pack, as data (nothing from the pull request is checked out or run)
-          git fetch --no-tags --quiet origin "refs/pull/$number/head"
-          if [ "$(git rev-parse FETCH_HEAD)" != "$HEAD_SHA" ]; then echo "#$number has new commits: their check decides"; exit 0; fi
-          git show "$HEAD_SHA:$file" > "$RUNNER_TEMP/updated.json"
+          # the pack as main would have it after the merge (GitHub's merge preview), as data: nothing from the pull
+          # request is checked out or run. Judging the merge, not the branch, means a branch that's only behind
+          # main doesn't look like it brings back older texts.
+          git fetch --no-tags --quiet origin "refs/pull/$number/merge" || { echo "#$number can't be merged as it is: a maintainer reviews it"; exit 0; }
+          merge=$(git rev-parse FETCH_HEAD)
+          if [ "$(git rev-parse "$merge^2")" != "$HEAD_SHA" ]; then echo "#$number: GitHub's merge preview isn't for $HEAD_SHA (new commits?): their check decides"; exit 0; fi
+          git show "$merge:$file" > "$RUNNER_TEMP/updated.json"
           { echo "number=$number"; echo "login=$login"; echo "file=$file"; } >> "$GITHUB_OUTPUT"
 
       - name: Is it one of the pack's owners, keeping the pack's code and people?

@@ -7,7 +7,8 @@ first published) are put there automatically; anyone else only by a maintainer e
 a pack's "authors" is credit, not a right to publish.
 
 What: the update must keep the pack's language code, remove nobody from "authors" and (in a pull request, which
-replaces the whole file) not drop more than a fifth of the pack's translated texts.
+replaces the whole file) not drop more than a fifth of the pack's translated texts, nor bring back texts that are
+older than the published ones (tools/pack_history.py compares it with the pack's history).
 
     python3 tools/author_update.py <pack on main> <updated pack> <github username>
 
@@ -19,6 +20,8 @@ import json
 import os
 import sys
 import tempfile
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from collections import OrderedDict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -95,6 +98,22 @@ def main(argv):
     login = argv[2]
     owner = is_owner(pack_id, login)
     reasons = review_reasons(pack_id, old, new, login) if owner else []
+    if owner:
+        # a pull request replaces the whole file: it mustn't undo texts changed after the copy it was made from
+        import pack_history
+        rel = os.path.relpath(os.path.abspath(argv[0]), ROOT).replace(os.sep, '/')
+        res = pack_history.compare(old, new, pack_history.history(rel))
+        if res['kept_newer']:
+            reasons.append('it brings back %d older text%s (changed in the pack after the copy it was made from), '
+                           'e.g. %s' % (len(res['kept_newer']), '' if len(res['kept_newer']) == 1 else 's',
+                                        ', '.join('`%s`' % k for k in res['kept_newer'][:5])))
+        if res['older_english']:
+            reasons.append('%d text%s translated from older English than the published ones'
+                           % (len(res['older_english']), ' was' if len(res['older_english']) == 1 else 's were'))
+        if res['conflicts']:
+            reasons.append('%d text%s changed both here and in the pack since the copy it was made from, e.g. %s'
+                           % (len(res['conflicts']), '' if len(res['conflicts']) == 1 else 's',
+                              ', '.join('`%s`' % k for k in res['conflicts'][:5])))
     out = os.environ.get('GITHUB_OUTPUT')
     if out:
         with open(out, 'a', encoding='utf-8') as f:

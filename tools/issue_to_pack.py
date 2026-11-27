@@ -40,6 +40,7 @@ from collections import OrderedDict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_index import CODE, GITHUB, LANGUAGES, PACK_ID, ROOT, REPOSITORY, pack_files, variant_key  # noqa: E402
 import author_update  # noqa: E402
+import pack_history  # noqa: E402
 from author_update import same_author  # noqa: E402
 
 MAX_BYTES = 20 * 1024 * 1024
@@ -188,16 +189,18 @@ def add_authors(authors, new):
     return authors
 
 
-def merge_into(old, new):
-    """An improvement: the old pack's header stays, the new texts replace the old ones, every author stays."""
+def merge_into(old, new, keys):
+    """An update: the old pack's header stays, the texts in keys (the ones the sender changed, see
+    tools/pack_history.py) replace the old ones, every other text and every author stays."""
     out = OrderedDict(old)
     for field in ('strings', 'sources'):
         merged = OrderedDict(old.get(field) or {})
-        for k, v in (new.get(field) or {}).items():
-            merged[k] = v
+        for k in keys:
+            if k in (new.get(field) or {}):
+                merged[k] = new[field][k]
         out[field] = merged
     out['authors'] = add_authors(list(old.get('authors') or []), new.get('authors') or [])
-    if new.get('app_version'):
+    if new.get('app_version') and (not old.get('app_version') or not pack_history.older_app(new, old)):
         out['app_version'] = new['app_version']
     if not (old.get('description') or '').strip() and new.get('description'):
         out['description'] = new['description']
@@ -229,16 +232,20 @@ def new_pack_id(o, packs):
                   'details**) and send it again, or say in the issue what it should be called.')
 
 
-def place(o, packs):
-    """→ (path, pack id, the pack to write, the existing pack it updates or None)."""
+def place(o, packs, take_conflicts):
+    """→ (path, pack id, the pack to write, the existing pack it updates or None, the comparison or None).
+    An update takes only the texts the sender changed since the version they started from (tools/pack_history.py);
+    texts both they and the pack changed since then are taken only when take_conflicts (a maintainer reviews it)."""
     target = find_target(o, packs)
     if target is not None:
         path, old = packs[target]
-        return path, target, merge_into(old, o), target
+        res = pack_history.compare(old, o, pack_history.history(path))
+        keys = res['changed'] + (res['conflicts'] if take_conflicts else [])
+        return path, target, merge_into(old, o, keys), target, res
     pack_id = new_pack_id(o, packs)
     if o.get('id') not in (None, '', pack_id):
         o['id'] = pack_id
-    return 'languages/%s/%s.json' % (o['code'], pack_id), pack_id, o, None
+    return 'languages/%s/%s.json' % (o['code'], pack_id), pack_id, o, None, None
 
 
 # ---------------------------------------------------------------- what we tell the person
@@ -290,8 +297,7 @@ def about_file(o, packs, target):
         path, p = packs[target]
         lines += ['🔄 **It updates a pack that\'s already here:** `%s` (%s).' % (
                       path, describe(p.get('name') or code, p.get('native_name'), p.get('variant'))),
-                  'Your texts replace the ones there. Texts your file doesn\'t have stay as they are, and everyone '
-                  'in its authors stays.', '']
+                  'Only the texts you changed are taken; every other text and everyone in its authors stays.', '']
     else:
         try:
             new_path = 'languages/%s/%s.json' % (code, new_pack_id(o, packs))
@@ -365,14 +371,19 @@ def run(body, number, author, mode):
         # it updates (.github/pack-owners.json) and keeps its code and people
         target = find_target(o, packs)
         info = about_file(o, packs, target)
-        path, pack_id, pack, improves = place(o, packs)
+        path, pack_id, pack, improves, res = place(o, packs, take_conflicts=False)
         pack['authors'] = add_authors(list(pack.get('authors') or []), people)
+        if res:
+            info += '\n' + '\n'.join(pack_history.summary(res, o, packs[target][1])) + '\n'
         if target is None or not author_update.is_owner(target, author):
             action = 'inform'
             write('pack-info.md', info + '\nA maintainer will look at it and make a pull request from it. If you '
                                          'change the file (edit this issue), this note follows.\n')
         else:
             reasons = author_update.review_reasons(target, packs[target][1], pack, author, whole_file=False)
+            if res and res['conflicts']:
+                reasons.append('%d text%s changed both by you and in the pack since your copy'
+                               % (len(res['conflicts']), '' if len(res['conflicts']) == 1 else 's'))
             if reasons:
                 action = 'review'
                 write('pack-info.md', info + '\nYou\'re one of this pack\'s owners, but this update needs a '
@@ -383,7 +394,7 @@ def run(body, number, author, mode):
                 write('pack-info.md', info + '\n✅ You\'re one of this pack\'s owners, so it\'s published right '
                                              'away.\n')
     else:
-        path, pack_id, pack, improves = place(o, packs)
+        path, pack_id, pack, improves, res = place(o, packs, take_conflicts=True)
         authors = add_authors(list(pack.get('authors') or []), people)
         if author and not improves and not any(isinstance(a, dict) and a.get('github') for a in authors):
             # a new pack where nobody has a GitHub username: credit the person who sent it (the maintainer sees
@@ -415,8 +426,12 @@ def run(body, number, author, mode):
     write('pack-pr.md', '\n'.join([
         'Made from the **Share a translation** issue #%s by @%s.' % (number, author), '',
         '**Language:** %s (`%s`)' % (lang, pack.get('code')),
-        '**Pack:** `%s`, %s' % (path, 'an update: the new texts replace the old ones, the other texts and every '
-                                      'author stay' if improves else 'a new pack'), '',
+        '**Pack:** `%s`, %s' % (path, 'an update: only the texts the sender changed are taken, every other text '
+                                      'and every author stays' if improves else 'a new pack'), '',
+    ] + ((pack_history.summary(res, o, packs[improves][1]) + [''] + (
+        ['**Check these:** the sender changed them, and so did the pack after the sender\'s copy; this pull request '
+         'has the sender\'s version: %s' % ', '.join('`%s`' % k for k in res['conflicts'][:40]), '']
+        if res['conflicts'] else [])) if res else []) + [
         '**Made by**', credits or '- (nobody listed)', '',
     ] + (['**Notes from the issue**', '', '> ' + notes.replace('\n', '\n> '), ''] if notes else []) + [
         '**Maintainer:** GitHub holds the check on pull requests opened by this bot: click **Approve workflows to '
