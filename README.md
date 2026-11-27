@@ -200,10 +200,9 @@ Your editor can also check the file as you type: point it to
 | `keys are not in today's English` (warning) | Texts the current app no longer has, or texts from a newer app version. They're harmless and kept. |
 | `leaves out {name}` (warning) | The translation drops a value the app fills in. Usually it's better to keep it. |
 
-## Problems and requests
+## Problems
 
 - A wrong, odd or too long text? [Report it](../../issues/new?template=translation-problem.yml).
-- Want a language that isn't here? [Ask for it](../../issues/new?template=request-language.yml).
 - The file format and every field: [CONTRIBUTING.md](CONTRIBUTING.md#the-file).
 
 ## How it works
@@ -234,26 +233,14 @@ python3 tools/build_index.py --check   # check every pack (what pull requests ru
 python3 tools/build_index.py           # check, then write index.json and the table above
 ```
 
-**Adding a translation sent with the form:**
+**Adding a translation sent with the form:** add the `create-pr` label to the issue. A workflow
+(`.github/workflows/share-translation.yml`) downloads the attached file, puts it in `languages/<code>/<id>.json`
+(an improvement is merged into the pack it improves), checks it, opens a pull request that closes the issue and
+comments the link. If the file has problems, it explains them on the issue and removes the label: add it again once
+the issue has a fixed file. Then review the pull request, approve it and merge it.
 
-1. Download the attached file (unzip it if needed) and read the issue: language, new pack or improvement, people.
-2. Pick the place: `languages/<code>/<id>.json` for a new pack, the pack's existing file for an improvement.
-3. Check that `authors` in the file matches the people in the issue (add their GitHub usernames).
-4. Then:
-
-   ```sh
-   git checkout -b add-zh-hans
-   mkdir -p languages/zh-Hans
-   cp ~/Downloads/antigem-language-chinese-simplified.json languages/zh-Hans/zh-hans.json
-   python3 tools/build_index.py --check languages/zh-Hans/zh-hans.json
-   git add languages/zh-Hans/zh-hans.json
-   git commit -m "Add Chinese (Simplified), from #12"
-   git push -u origin add-zh-hans
-   ```
-
-5. Open a pull request with `Closes #12` in its description, and merge it once the check passes.
-
-- `.github/workflows/check.yml` checks pull requests that touch `languages/`.
+- `.github/workflows/check.yml` checks every pull request with `main`'s own tools. Pull requests from anyone but
+  the owner may only change `languages/`.
 - `.github/workflows/publish.yml` runs on every push to `main`, every day and by hand. It fetches the app's
   current `en.json`, rebuilds `index.json` and this table, and commits them when they changed.
 

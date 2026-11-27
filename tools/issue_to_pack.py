@@ -204,10 +204,13 @@ def merge_into(old, new):
     return out
 
 
-def place(o, kind, file_name, packs):
+def place(o, kind, packs):
     """→ (path, pack id, the pack to write, the existing pack it improves or None)."""
+    # the id: the file's own "id", else the code (plus the variant: ne-formal). Not the file name: the app saves
+    # files as antigem-language-<name>.json, which isn't a good id.
     code = o['code']
-    candidates = [o.get('id'), os.path.splitext(file_name)[0].lower(), code.lower()]
+    variant = slug(o.get('variant') or '')
+    candidates = [o.get('id'), code.lower() + ('-' + variant if variant else ''), code.lower()]
     pack_id = next((c for c in candidates if isinstance(c, str) and PACK_ID.match(c) and len(c) <= 60), None)
 
     if kind == 'improvement':
@@ -229,8 +232,7 @@ def place(o, kind, file_name, packs):
     if pack_id is None:
         raise Refused('The pack needs an id: lowercase letters, digits and hyphens, like `ne` or `hi-latn`.')
     if pack_id in packs:
-        variant = slug(o.get('variant') or '')
-        alt = '%s-%s' % (pack_id, variant) if variant else None
+        alt = '%s-%s' % (pack_id, variant) if variant and not pack_id.endswith('-' + variant) else None
         if alt and alt not in packs and PACK_ID.match(alt):
             pack_id = alt
         else:
@@ -269,11 +271,11 @@ def run(body, number, author):
     if len(urls) > 1:
         raise Refused('There are %d attached files: please attach only the language file.' % len(urls))
     name = os.path.basename(urllib.parse.urlparse(urls[0]).path)
-    file_name, data = json_from_attachment(name, download(urls[0]))
+    _, data = json_from_attachment(name, download(urls[0]))
     o = parse_pack(data)
 
     packs = existing_packs()
-    path, pack_id, pack, improves = place(o, kind, file_name, packs)
+    path, pack_id, pack, improves = place(o, kind, packs)
     authors = add_authors(list(pack.get('authors') or []), form_authors(section(sections, 'Who made it')))
     if not authors and author:
         authors = [OrderedDict([('name', author), ('github', author)])]
