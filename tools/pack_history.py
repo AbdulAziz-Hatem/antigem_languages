@@ -11,9 +11,10 @@ started from (their "base"). Then, text by text:
     older_english  translated from older English than the pack's text           → the pack's text stays
     conflicts      changed by the sender AND in the pack since their base        → a maintainer decides
 
-    python3 tools/pack_history.py <pack path, e.g. languages/ru/ru.json> <updated file> [--ref main]
+    python3 tools/pack_history.py <pack path, e.g. languages/ru/ru.json> <updated file> [--ref main] [--note FILE]
 
-prints that summary (as GitHub warnings in Actions when texts would be lost). Needs Python 3.8+ and git.
+prints that summary (as GitHub warnings in Actions when texts would be lost); --note adds, when texts would be lost,
+a Markdown section for a comment on the pull request to FILE. Needs Python 3.8+ and git.
 """
 import json
 import os
@@ -134,12 +135,43 @@ def summary(res, incoming, current, keys_shown=8):
     return lines
 
 
+def pr_note(rel, res, keys_shown=10):
+    """Markdown for a pull request that changes this pack, or [] when nothing would be lost. Unlike the form, a pull
+    request is merged as it is, so this asks its author to fix it."""
+    if not (res['kept_newer'] or res['older_english'] or res['conflicts']):
+        return []
+    def keys(ks):
+        shown = ', '.join('`%s`' % k for k in ks[:keys_shown])
+        return shown + (' and %d more' % (len(ks) - keys_shown) if len(ks) > keys_shown else '')
+    def n(ks, one, many):
+        return '%d %s' % (len(ks), one if len(ks) == 1 else many)
+    lines = ['**`%s`**: your copy matches the version from %s (`%s`).' % (
+        rel, res['base_date'], (res['base'] or '')[:7]) if res['base'] else '**`%s`**:' % rel, '']
+    if res['changed']:
+        lines.append('- ✏️ %s you changed: fine.' % n(res['changed'], 'text', 'texts'))
+    if res['kept_newer']:
+        lines.append('- 🕰️ **%s back to an older version** (changed in the pack after your copy): %s'
+                     % (n(res['kept_newer'], 'text would go', 'texts would go'), keys(res['kept_newer'])))
+    if res['older_english']:
+        lines.append('- 🇬🇧 **%s from older English** than the published one: %s'
+                     % (n(res['older_english'], 'text is translated', 'texts are translated'),
+                        keys(res['older_english'])))
+    if res['conflicts']:
+        lines.append('- ⚠️ **%s both by you and in the pack since your copy:** %s'
+                     % (n(res['conflicts'], 'text changed', 'texts changed'), keys(res['conflicts'])))
+    return lines + ['']
+
+
 def main(argv):
-    ref = 'HEAD'
-    if '--ref' in argv:
-        i = argv.index('--ref')
-        ref = argv[i + 1]
-        argv = argv[:i] + argv[i + 2:]
+    ref, note = 'HEAD', None
+    for flag in ('--ref', '--note'):
+        if flag in argv:
+            i = argv.index(flag)
+            if flag == '--ref':
+                ref = argv[i + 1]
+            else:
+                note = argv[i + 1]
+            argv = argv[:i] + argv[i + 2:]
     if len(argv) != 2:
         sys.exit(__doc__)
     rel, path = argv
@@ -151,6 +183,11 @@ def main(argv):
         return 0
     current = versions[0][2]
     res = compare(current, incoming, versions)
+    if note:
+        lines = pr_note(rel, res)
+        if lines:
+            with open(note, 'a', encoding='utf-8', newline='\n') as f:
+                f.write('\n'.join(lines) + '\n')
     print('%s: compared with the version from %s (%s): %d changed, %d older than published, %d from older English, '
           '%d conflicts' % (rel, res['base_date'], (res['base'] or '')[:7], len(res['changed']),
                             len(res['kept_newer']), len(res['older_english']), len(res['conflicts'])))
