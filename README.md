@@ -21,12 +21,12 @@ tap the language to show the app in it.
 <!-- languages:start -->
 | Language | | Translated | By | File |
 |---|---|---|---|---|
-| Arabic | العربية | 100% | [AbdulAziz-Hatem](https://github.com/AbdulAziz-Hatem) | [ar](languages/ar/ar.json) |
+| Arabic | العربية | 98% | [AbdulAziz-Hatem](https://github.com/AbdulAziz-Hatem) | [ar](languages/ar/ar.json) |
 | Chinese (Simplified) | 简体中文 | 100% | [Zmin](https://github.com/Zmin2003) | [zh-hans](languages/zh-Hans/zh-hans.json) |
 | Pirate English (TEST) · Test only, not for use | Pirate Speak | 58% | [AntiGem](https://github.com/Santoshkurmi) | [en-pirate-test](languages/en/en-pirate-test.json) |
-| Russian | Русский | 88% | [kuprizzz](https://github.com/Selyrith) | [ru](languages/ru/ru.json) |
-| Turkish | Türkçe | 92% | [muazzezwq](https://github.com/muazzezwq) | [turkish](languages/tr/turkish.json) |
-| Vietnamese | Tiếng Việt | 92% | AntiGem AI, [anhthao121](https://github.com/anhthao121) | [vi](languages/vi/vi.json) |
+| Russian | Русский | 87% | [kuprizzz](https://github.com/Selyrith) | [ru](languages/ru/ru.json) |
+| Turkish | Türkçe | 90% | [muazzezwq](https://github.com/muazzezwq) | [turkish](languages/tr/turkish.json) |
+| Vietnamese | Tiếng Việt | 91% | AntiGem AI, [anhthao121](https://github.com/anhthao121) | [vi](languages/vi/vi.json) |
 <!-- languages:end -->
 
 The table and [`index.json`](index.json) are rebuilt automatically after every change.
